@@ -1,6 +1,7 @@
 #ifndef QUICKSORTEXT_H
 #define QUICKSORTEXT_H
 
+#include "area.h"
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>

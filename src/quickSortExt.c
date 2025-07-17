@@ -1,4 +1,4 @@
-#include "quickSortExt.h"
+#include "../include/quickSortExt.h"
 #include "../include/area.h"
 
 void QuicksortExterno (FILE **ArqLi , FILE **ArqEi , FILE **ArqLEs, int Esq, int Dir){
@@ -22,6 +22,7 @@ void LeSup(FILE **ArqLEs, Registro *UltLido , int *Ls , bool *OndeLer) {
     (*Ls)--;
     *OndeLer = false;
 }
+
 void LeInf(FILE **ArqLi , Registro *UltLido , int *Li , bool *OndeLer) {
     fread(UltLido , sizeof(Registro ) , 1 , *ArqLi );
     (*Li)++;
