@@ -16,18 +16,32 @@ void QuicksortExterno (FILE **ArqLi , FILE **ArqEi , FILE **ArqLEs, int Esq, int
     } 
 }
 
-void LeSup(FILE **ArqLEs, Registro *UltLido , int *Ls , bool *OndeLer) { 
-    fseek(*ArqLEs, (*Ls - 1) * sizeof(Registro) ,SEEK_SET );
-    fread(UltLido , sizeof(Registro ) , 1 , *ArqLEs);
+void LeInf(FILE **Arq, Registro *reg, int *Li, bool *OndeLer) {
+    char linha[200];
+    for (int i = 0; i < *Li; i++) {
+        if (fgets(linha, sizeof(linha), *Arq) == NULL) return;  // até alcançar a linha desejada
+    }
+
+    sscanf(linha, "%8ld %5lf %2s %50[^\n] %30[^\n]",
+           &reg->chave, &reg->nota, reg->estado, reg->cidade, reg->curso);
+
+    (*Li)++;
+    *OndeLer = true;
+}
+
+void LeSup(FILE **Arq, Registro *reg, int *Ls, bool *OndeLer) {
+    char linha[200];
+    for (int i = 0; i < *Ls; i++) {
+        if (fgets(linha, sizeof(linha), *Arq) == NULL) return;  // até alcançar a linha desejada
+    }
+
+    sscanf(linha, "%8ld %5lf %2s %50[^\n] %30[^\n]",
+           &reg->chave, &reg->nota, reg->estado, reg->cidade, reg->curso);
+
     (*Ls)--;
     *OndeLer = false;
 }
 
-void LeInf(FILE **ArqLi , Registro *UltLido , int *Li , bool *OndeLer) {
-    fread(UltLido , sizeof(Registro ) , 1 , *ArqLi );
-    (*Li)++;
-    *OndeLer = true;
-}
 
 void InserirArea (TipoArea *Area, Registro *UltLido , int *NRArea) { /*Insere UltLido de forma ordenada na Area*/
     InsereItem(*UltLido , Area);
@@ -35,15 +49,31 @@ void InserirArea (TipoArea *Area, Registro *UltLido , int *NRArea) { /*Insere Ul
 }
 
 void EscreveMax(FILE **ArqLEs, Registro R, int *Es) {
-    fseek(*ArqLEs, (*Es - 1) * sizeof(Registro) ,SEEK_SET );
-    fwrite(&R, sizeof(Registro ) , 1 , *ArqLEs);
+    char linha[200];
+    for (int i = 0; i < *Es; i++) {
+        if (fgets(linha, sizeof(linha), *ArqLEs) == NULL) return;  // até alcançar a linha desejada
+    }
+    fprintf(*ArqLEs, "%08ld %5.1lf %2s %-50s %-30s\n",
+        R.chave,
+        R.nota,
+        R.estado,
+        R.cidade,
+        R.curso
+    );
     (*Es)--;
 }
 
 void EscreveMin(FILE **ArqEi , Registro R, int *Ei) {
-    fwrite(&R, sizeof(Registro ) , 1 , *ArqEi );
+    fprintf(*ArqEi, "%08ld %5.1lf %2s %-50s %-30s\n",
+        R.chave,
+        R.nota,
+        R.estado,
+        R.cidade,
+        R.curso
+    );
     (*Ei)++;
 }
+
 
 void RetiraMax(TipoArea *Area, Registro *R, int *NRArea) {
     RetiraUltimo(Area, R);
@@ -61,7 +91,7 @@ void Particao(FILE **ArqLi , FILE **ArqEi , FILE **ArqLEs, TipoArea Area, int Es
     Registro UltLido , R;
     fseek (*ArqLi , ( Li - 1)* sizeof(Registro ) , SEEK_SET );
     fseek (*ArqEi , (Ei - 1)* sizeof(Registro ) , SEEK_SET );
-    * i = Esq - 1;
+    *i = Esq - 1;
     *j = Dir + 1;
     while (Ls >= Li) {
         if (NRArea < TAMAREA - 1) {
@@ -82,12 +112,12 @@ void Particao(FILE **ArqLi , FILE **ArqEi , FILE **ArqLEs, TipoArea Area, int Es
         else    
             LeInf(ArqLi, &UltLido, &Li , &OndeLer);
 
-        if (UltLido.chave > Lsup) {
+        if (UltLido.nota > Lsup) {
             * j = Es;
             EscreveMax(ArqLEs, UltLido, &Es);
             continue ;
         }
-        if (UltLido.chave < Linf) {
+        if (UltLido.nota < Linf) {
             * i = Ei ;
             EscreveMin(ArqEi , UltLido, &Ei );
             continue ;
