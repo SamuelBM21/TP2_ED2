@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "../include/quickSortExt.h"
+#include "../include/intercalacao_qsort.h"
 #include "../include/area.h"
 
 int main(int argc, char* argv[]) {
@@ -40,9 +41,13 @@ int main(int argc, char* argv[]) {
     }
 
     switch(metodo){
-        case 1: break;
+        case 1: 
+            printf("Chamando intercalação balanceada com quantidade = %d\n", quantidade);
+            intercalacaoBalanceada(quantidade);
+            break;
         case 2: break;
         case 3:
+            printf("Chamando quicksort com quantidade = %d\n", quantidade);
             QuicksortExterno(&li, &ei, &les, 0, quantidade);
             break;
     }

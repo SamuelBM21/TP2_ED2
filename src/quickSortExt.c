@@ -17,7 +17,9 @@ void QuicksortExterno (FILE **ArqLi , FILE **ArqEi , FILE **ArqLEs, int Esq, int
 }
 
 void LeInf(FILE **Arq, Registro *reg, int *Li, bool *OndeLer) {
+    printf("LeInf: tentando acessar linha %d\n", *Li);
     char linha[200];
+    fseek(*Arq, 0, SEEK_SET); // ← volta ao início do arquivo
     for (int i = 0; i < *Li; i++) {
         if (fgets(linha, sizeof(linha), *Arq) == NULL) return;  // até alcançar a linha desejada
     }
@@ -30,7 +32,9 @@ void LeInf(FILE **Arq, Registro *reg, int *Li, bool *OndeLer) {
 }
 
 void LeSup(FILE **Arq, Registro *reg, int *Ls, bool *OndeLer) {
+    printf("LeSup: tentando acessar linha %d\n", *Ls);
     char linha[200];
+    fseek(*Arq, 0, SEEK_SET); // ← volta ao início do arquivo
     for (int i = 0; i < *Ls; i++) {
         if (fgets(linha, sizeof(linha), *Arq) == NULL) return;  // até alcançar a linha desejada
     }
@@ -86,15 +90,17 @@ void RetiraMin(TipoArea *Area, Registro *R, int *NRArea) {
 }
 
 void Particao(FILE **ArqLi , FILE **ArqEi , FILE **ArqLEs, TipoArea Area, int Esq, int Dir , int * i , int * j ){
-    int Ls = Dir , Es = Dir , Li = Esq, Ei = Esq, NRArea = 0 , Linf = INT_MIN , Lsup = INT_MAX;
+    int Ls = Dir , Es = Dir , Li = Esq, Ei = Esq, NRArea = 0;
+    double Linf = -DBL_MAX, Lsup = DBL_MAX;
     bool OndeLer = true;
     Registro UltLido , R;
-    fseek (*ArqLi , ( Li - 1)* sizeof(Registro ) , SEEK_SET );
-    fseek (*ArqEi , (Ei - 1)* sizeof(Registro ) , SEEK_SET );
+    //fseek (*ArqLi , ( Li - 1)* sizeof(Registro ) , SEEK_SET );
+    //fseek (*ArqEi , (Ei - 1)* sizeof(Registro ) , SEEK_SET );
     *i = Esq - 1;
     *j = Dir + 1;
+    printf("Particao: Esq = %d, Dir = %d\n", Esq, Dir);
     while (Ls >= Li) {
-        if (NRArea < TAMAREA - 1) {
+        if (NRArea < (TAMAREA - 1)) {
             if (OndeLer) 
                 LeSup(ArqLEs, &UltLido, &Ls, &OndeLer);
             else 
@@ -126,16 +132,17 @@ void Particao(FILE **ArqLi , FILE **ArqEi , FILE **ArqLEs, TipoArea Area, int Es
         if (Ei - Esq < Dir - Es) {
             RetiraMin(&Area, &R, &NRArea );
             EscreveMin(ArqEi , R, &Ei );
-            Linf = R.chave;
+            Linf = R.nota;
         } 
         else { 
             RetiraMax(&Area, &R, &NRArea );
             EscreveMax(ArqLEs, R, &Es);
-            Lsup = R.chave;
+            Lsup = R.nota;
         } 
     }
     while (Ei <= Es) { 
         RetiraMin(&Area, &R, &NRArea );
         EscreveMin(ArqEi , R, &Ei );
     }
+    printf("Particao terminou: *i = %d, *j = %d\n", *i, *j);
 }
