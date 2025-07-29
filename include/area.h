@@ -1,6 +1,7 @@
 #ifndef AREA_H
 #define AREA_H
 
+#include <float.h>
 #include <stdio.h>
 
 #define TAMAREA 20

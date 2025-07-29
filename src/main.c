@@ -1,10 +1,12 @@
 #include <stdio.h>
 #include "../include/quickSortExt.h"
 #include "../include/intercalacao_qsort.h"
+#include "../include/conversor.h"
 #include "../include/area.h"
 
 int main(int argc, char* argv[]) {
 
+    char in[20],out[20],conv[20];
     if (argc != 3 && argc != 4){                    
         printf("Não foi passado o número mínimo de parâmetros. \n");
         return 0;
@@ -29,10 +31,26 @@ int main(int argc, char* argv[]) {
 
     }
 
-    // Simples chamada fictícia só para compilar
-    FILE *li = fopen("PROVAO.TXT", "r"); 
-    FILE *ei = fopen("PROVAO.TXT", "r+");
-    FILE *les = fopen("PROVAO.TXT", "r+");
+    switch(situacao){
+        case 1: //Ordenado Ascendentemente
+            strcpy(in,"ordenadoasc.txt");
+            strcpy(out,"saida.bin");
+            break;
+        case 2:
+            strcpy(in,"ordenadodesc.txt");
+            strcpy(out,"saida.bin");
+            break;
+        case 3:
+            strcpy(in,"PROVAO.TXT");
+            strcpy(out,"saida.bin");
+            break;
+    }
+
+    txtbin(in,out,quantidade);
+
+    FILE *li = fopen("saida.bin", "rb"); 
+    FILE *ei = fopen("saida.bin", "r+b");
+    FILE *les = fopen("saida.bin", "r+b");
 
 
     if (!li || !ei || !les) {
@@ -51,6 +69,7 @@ int main(int argc, char* argv[]) {
             QuicksortExterno(&li, &ei, &les, 0, quantidade);
             break;
     }
-    printf("Quicksort externo chamado!\n");
+    strcpy(conv,"resultado.txt");
+    bintxt(out,conv);
     return 0;
 }

@@ -57,3 +57,5 @@ dkms.conf
 *.TXT
 *.txt
 *.rar
+*.bin
+
