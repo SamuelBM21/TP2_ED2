@@ -7,7 +7,7 @@
 int main(int argc, char* argv[]) {
 
     char in[20],out[20],conv[20];
-    if (argc != 3 && argc != 4){                    
+    if (argc != 4 && argc != 5){                    
         printf("Não foi passado o número mínimo de parâmetros. \n");
         return 0;
     }
@@ -46,18 +46,6 @@ int main(int argc, char* argv[]) {
             break;
     }
 
-    txtbin(in,out,quantidade);
-
-    FILE *li = fopen("saida.bin", "rb"); 
-    FILE *ei = fopen("saida.bin", "r+b");
-    FILE *les = fopen("saida.bin", "r+b");
-
-
-    if (!li || !ei || !les) {
-        perror("Erro ao abrir arquivos");
-        return 1;
-    }
-
     switch(metodo){
         case 1: 
             printf("Chamando intercalação balanceada com quantidade = %d\n", quantidade);
@@ -65,8 +53,19 @@ int main(int argc, char* argv[]) {
             break;
         case 2: break;
         case 3:
+            txtbin(in,out,quantidade);
+
+            FILE *li = fopen("saida.bin", "rb"); 
+            FILE *ei = fopen("saida.bin", "r+b");
+            FILE *les = fopen("saida.bin", "r+b");
+        
+        
+            if (!li || !ei || !les) {
+                perror("Erro ao abrir arquivos");
+                return 1;
+            }
             printf("Chamando quicksort com quantidade = %d\n", quantidade);
-            QuicksortExterno(&li, &ei, &les, 0, quantidade);
+            QuicksortExterno(&li, &ei, &les, 1, quantidade);
             break;
     }
     strcpy(conv,"resultado.txt");

@@ -15,7 +15,7 @@ void troca(Registro *a, Registro *b) {
 }
 
 void sobeHeapMin(Registro v[], int i) {
-    while (i > 0 && v[i].chave < v[(i - 1) / 2].chave) {
+    while (i > 0 && v[i].nota < v[(i - 1) / 2].nota) {
         troca(&v[i], &v[(i - 1) / 2]);
         i = (i - 1) / 2;
     }
@@ -26,8 +26,8 @@ void desceHeapMin(Registro v[], int n, int i) {
     int esq = 2 * i + 1;
     int dir = 2 * i + 2;
 
-    if (esq < n && v[esq].chave < v[menor].chave) menor = esq;
-    if (dir < n && v[dir].chave < v[menor].chave) menor = dir;
+    if (esq < n && v[esq].nota < v[menor].nota) menor = esq;
+    if (dir < n && v[dir].nota < v[menor].nota) menor = dir;
 
     if (menor != i) {
         troca(&v[i], &v[menor]);
@@ -56,7 +56,7 @@ void RetiraUltimo(TipoArea *Area, Registro *reg) {
     // Procurar o índice do maior elemento
     int idxMaior = 0;
     for (int i = 1; i < Area->n; i++) {
-        if (Area->itens[i].chave > Area->itens[idxMaior].chave) {
+        if (Area->itens[i].nota > Area->itens[idxMaior].nota) {
             idxMaior = i;
         }
     }
