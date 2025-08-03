@@ -3,7 +3,8 @@
 
 #include <float.h>
 #include <stdio.h>
-
+#include <stdbool.h>
+#include <math.h>
 #define TAMAREA 20
 
 typedef struct{

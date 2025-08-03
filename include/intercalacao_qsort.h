@@ -3,21 +3,21 @@
 
 #include "area.h"
 #include <stdlib.h>
-#define MEMORIA 20
-#define FITAS 40
-#define FITAS_ENTRADA 20
-#define FITAS_SAIDA 20
+#define TAM_MEM 20
+#define TAM_NOME 32
+#define TOTAL_FITAS 40
+#define FITAS 20
 
-// Função de comparação para ordenação
-int compara(const void *a, const void *b);
-
-// Cria blocos ordenados de entrada
-int criaBlocos(char *arquivoEntrada);
-
-// Lê um registro de uma fita (arquivo)
-int leRegistro(FILE *fp, Registro *r);
+// Adiciona esta estrutura para controlar o estado de cada fita
+typedef struct {
+    FILE *arquivo;
+    int blocosRestantes;
+    int elementosRestantes;
+    Registro registroAtual;
+    short ativo;
+} FitaEstado;
 
 // Executa a intercalação balanceada nas fitas
-void intercalacaoBalanceada(int totalBlocos);
+void intercalacaoBalanceada(const char *inputFile, int totalBlocos);
 
 #endif // INTERCALACAO_BALANCEADA_H

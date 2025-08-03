@@ -6,7 +6,7 @@
 
 int main(int argc, char* argv[]) {
 
-    char in[20],out[20],conv[20];
+    char in[20],out[20];
     if (argc != 4 && argc != 5){                    
         printf("Não foi passado o número mínimo de parâmetros. \n");
         return 0;
@@ -48,8 +48,9 @@ int main(int argc, char* argv[]) {
 
     switch(metodo){
         case 1: 
+            txtbin(in,out,quantidade);
             printf("Chamando intercalação balanceada com quantidade = %d\n", quantidade);
-            intercalacaoBalanceada(quantidade);
+            intercalacaoBalanceada("saida.bin",quantidade);
             break;
         case 2: break;
         case 3:
@@ -68,7 +69,5 @@ int main(int argc, char* argv[]) {
             QuicksortExterno(&li, &ei, &les, 1, quantidade);
             break;
     }
-    strcpy(conv,"resultado.txt");
-    bintxt(out,conv);
     return 0;
 }

@@ -3,7 +3,7 @@
 #include <string.h>
 #include "../include/area.h"
 
-int txtbin(char in[20], char out[20], int qtd) {
+int txtbin(char *in, char *out, int qtd) {
     FILE *txtFile, *binFile;
     int i = 0;
     char buffer[256];
@@ -53,7 +53,7 @@ int txtbin(char in[20], char out[20], int qtd) {
 }
 
 
-int bintxt(char in[20], char out[20]) {
+int bintxt(char *in, char *out) {
     FILE *binFile, *txtFile;
     Registro reg;
 
