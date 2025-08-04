@@ -101,6 +101,7 @@ void gerarBlocosOrdenados(const char *inputFile, int totalRegs, int numBlocos[],
 }
 
 void intercalacaoBalanceada(const char *inputFile, int totalRegs) {
+    system("rm -rf fitas");
     system("mkdir -p fitas");
     
     // Inicialização de variáveis
@@ -158,7 +159,9 @@ void intercalacaoBalanceada(const char *inputFile, int totalRegs) {
 
                 if (estados[idx].ativo && estados[idx].blocosRestantes > 0) {
                     // Estimar tamanho médio do bloco da fita
-                    int tamanhoBloco = numBlocos[idx] > 0 ? nElem[idx] / numBlocos[idx] : 0;
+                    //int tamanhoBloco = numBlocos[idx] > 0 ? nElem[idx] / numBlocos[idx] : 0;
+                    int tamanhoBloco = numBlocos[idx] > 0 ? (nElem[idx] + numBlocos[idx] - 1) / numBlocos[idx] : 0;
+
                     registrosRestantesBloco[i] = tamanhoBloco;
                     printf("Registros Restantes %d: %d\n", i , registrosRestantesBloco[i]);
                     if (tamanhoBloco > 0 &&
