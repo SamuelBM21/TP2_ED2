@@ -41,6 +41,8 @@ int comparaLongs(const void *a, const void *b) {
 int main() {
     FILE *arqOrig = fopen("PROVAO.TXT", "r");
     FILE *arqRes = fopen("resultado.txt", "r");
+    int qtd = 1000;
+    int i = 0;
 
     if (!arqOrig || !arqRes) {
         perror("Erro ao abrir arquivos");
@@ -50,13 +52,16 @@ int main() {
     char linha[256];
 
     // Lê chaves do original
-    while (fgets(linha, sizeof(linha), arqOrig) != NULL) {
+    while (fgets(linha, sizeof(linha), arqOrig) != NULL && i<qtd) {
         chavesOrig[totalOrig++] = extraiChave(linha);
+        i++;
     }
 
+    i=0;
     // Lê chaves do resultado
-    while (fgets(linha, sizeof(linha), arqRes) != NULL) {
+    while (fgets(linha, sizeof(linha), arqRes) != NULL && i<qtd) {
         chavesRes[totalRes++] = extraiChave(linha);
+        i++;
     }
 
     fclose(arqOrig);

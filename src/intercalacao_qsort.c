@@ -100,26 +100,6 @@ void gerarBlocosOrdenados(const char *inputFile, int totalRegs, int numBlocos[],
     fclose(entrada);
 }
 
-void abrirFitas(FILE **fitas, int inicio, int qtde, const char *modo) {
-    char nome[TAM_NOME];
-    for (int i = 0; i < qtde; i++) {
-        sprintf(nome, "fitas/fita%02d.bin", inicio + i);
-        fitas[inicio + i] = fopen(nome, modo);
-        if (!fitas[inicio + i]) {
-            fprintf(stderr, "Erro ao abrir '%s': %s\n", nome, strerror(errno));
-            exit(EXIT_FAILURE);
-        }
-    }
-}
-
-void fecharFitas(FILE **fitas, int inicio, int qtde) {
-    for (int i = 0; i < qtde; i++) {
-        if (fitas[inicio + i]) {
-            fclose(fitas[inicio + i]);
-        }
-    }
-}
-
 void intercalacaoBalanceada(const char *inputFile, int totalRegs) {
     system("mkdir -p fitas");
     
@@ -166,11 +146,6 @@ void intercalacaoBalanceada(const char *inputFile, int totalRegs) {
         int elementosProduzidos = 0;
         int blocoAtual = 0;
 
-/*         for(int i = 0; i< FITAS; i++){
-            printf("Blocos F%02d : %d\n", i, estados[i].blocosRestantes);
-            printf("nElem F%02d : %d\n", i, estados[i].elementosRestantes);
-        } */
-
         while (1) {
             Registro memoria[FITAS];
             short fitasAtivas[FITAS] = {0};
@@ -185,7 +160,7 @@ void intercalacaoBalanceada(const char *inputFile, int totalRegs) {
                     // Estimar tamanho médio do bloco da fita
                     int tamanhoBloco = numBlocos[idx] > 0 ? nElem[idx] / numBlocos[idx] : 0;
                     registrosRestantesBloco[i] = tamanhoBloco;
-
+                    printf("Registros Restantes %d: %d\n", i , registrosRestantesBloco[i]);
                     if (tamanhoBloco > 0 &&
                         fread(&memoria[i], sizeof(Registro), 1, estados[idx].arquivo) == 1) {
                         fitasAtivas[i] = 1;
