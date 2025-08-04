@@ -164,60 +164,81 @@ void intercalacaoBalanceada(const char *inputFile, int totalRegs) {
         // Contadores para nova passagem
         int blocosProduzidos = 0;
         int elementosProduzidos = 0;
-        int fitaSaidaAtual = inicioSaida;
+        int blocoAtual = 0;
 
-        for(int i = 0; i< FITAS; i++){
-            printf("Blocos F%2d : %d\n", i, estados[i].blocosRestantes);
-            printf("nElem F%2d : %d\n", i, estados[i].elementosRestantes);
-        }
-        // Enquanto houver blocos para processar
+/*         for(int i = 0; i< FITAS; i++){
+            printf("Blocos F%02d : %d\n", i, estados[i].blocosRestantes);
+            printf("nElem F%02d : %d\n", i, estados[i].elementosRestantes);
+        } */
+
         while (1) {
             Registro memoria[FITAS];
             short fitasAtivas[FITAS] = {0};
+            int registrosRestantesBloco[FITAS] = {0};  // registros que ainda faltam do bloco atual
             int fitasComDados = 0;
 
-            // Carregar primeiro registro de cada fita ativa
+            // Carregar primeiro registro do primeiro bloco de cada fita
             for (int i = 0; i < FITAS; i++) {
                 int idx = inicioEntrada + i;
+
                 if (estados[idx].ativo && estados[idx].blocosRestantes > 0) {
-                    if (fread(&memoria[i], sizeof(Registro), 1, estados[idx].arquivo) == 1) {
+                    // Estimar tamanho médio do bloco da fita
+                    int tamanhoBloco = numBlocos[idx] > 0 ? nElem[idx] / numBlocos[idx] : 0;
+                    registrosRestantesBloco[i] = tamanhoBloco;
+
+                    if (tamanhoBloco > 0 &&
+                        fread(&memoria[i], sizeof(Registro), 1, estados[idx].arquivo) == 1) {
                         fitasAtivas[i] = 1;
                         fitasComDados++;
+                        registrosRestantesBloco[i]--;  // já lemos um
                     } else {
                         estados[idx].ativo = 0;
+                        fitasAtivas[i] = 0;
+                        registrosRestantesBloco[i] = 0;
                     }
+                } else {
+                    fitasAtivas[i] = 0;
+                    registrosRestantesBloco[i] = 0;
                 }
             }
 
-            if (fitasComDados == 0) break;
+            if (fitasComDados == 0) break;  // acabou todos os blocos
 
-            // Intercalação de um bloco completo
+            // Fita de saída onde esse bloco será armazenado
+            int fitaSaidaBloco = inicioSaida + (blocoAtual % FITAS);
+            blocoAtual++;
+
             int elementosBloco = 0;
+
+            // Começa a intercalação de um conjunto de blocos (um de cada fita)
             while (fitasComDados > 0) {
                 int idxMenor = menorRegistroAtivo(memoria, fitasAtivas, FITAS);
                 if (idxMenor == -1) break;
 
-                // Escreve o menor registro na fita de saída
-                fwrite(&memoria[idxMenor], sizeof(Registro), 1, estados[fitaSaidaAtual].arquivo);
+                fwrite(&memoria[idxMenor], sizeof(Registro), 1, estados[fitaSaidaBloco].arquivo);
                 elementosBloco++;
                 elementosProduzidos++;
 
-                // Lê próximo registro da mesma fita
                 int fitaIdx = inicioEntrada + idxMenor;
-                if (fread(&memoria[idxMenor], sizeof(Registro), 1, estados[fitaIdx].arquivo) != 1) {
+
+                if (registrosRestantesBloco[idxMenor] == 0 ||
+                    fread(&memoria[idxMenor], sizeof(Registro), 1, estados[fitaIdx].arquivo) != 1) {
+                    
+                    // Acabou o bloco ou não há mais o que ler da fita
                     fitasAtivas[idxMenor] = 0;
                     fitasComDados--;
                     estados[fitaIdx].blocosRestantes--;
+                    registrosRestantesBloco[idxMenor] = 0;
+                    memset(&memoria[idxMenor], 0, sizeof(Registro));
+                } else {
+                    registrosRestantesBloco[idxMenor]--;
                 }
             }
 
-            // Finaliza o bloco na fita de saída
-            numBlocos[fitaSaidaAtual]++;
-            nElem[fitaSaidaAtual] += elementosBloco;
+            // Finaliza e contabiliza o bloco criado na fita de saída
+            numBlocos[fitaSaidaBloco]++;
+            nElem[fitaSaidaBloco] += elementosBloco;
             blocosProduzidos++;
-
-            // Alterna para próxima fita de saída
-            fitaSaidaAtual = inicioSaida + (blocosProduzidos % FITAS);
         }
 
         // Fechar todas as fitas

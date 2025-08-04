@@ -3,6 +3,7 @@
 
 #include "area.h"
 #include <stdlib.h>
+#include <math.h>
 #define TAM_MEM 20
 #define TAM_NOME 32
 #define TOTAL_FITAS 40

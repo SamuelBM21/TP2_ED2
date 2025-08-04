@@ -1,6 +1,6 @@
 # Compilador e flags
 CC = gcc
-CFLAGS = -Wall -Iinclude
+CFLAGS = -Wall -Iinclude 
 
 # Diretórios
 SRC_DIR = src
@@ -16,7 +16,7 @@ all: $(BIN)
 
 # Linkagem
 $(BIN): $(OBJS)
-	$(CC) $(OBJS) -o $@
+	$(CC) $(OBJS) -o $@ -lm
 
 # Compilação de cada .c para .o no diretório obj
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
