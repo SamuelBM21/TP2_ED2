@@ -141,25 +141,25 @@ void intercalacaoBalanceada(const char *inputFile, int totalRegs) {
     int passagem = 0;
     int numFitasComDados;
 
-    gerarBlocosOrdenados(inputFile, totalRegs, numBlocos, nElem);
+    gerarBlocosOrdenados(inputFile, totalRegs, numBlocos, nElem);                       //Gera os blocos ordenados nas fitas
 
     FitaEstado estados[TOTAL_FITAS];
-    memset(estados, 0, sizeof(estados)); // Zera estrutura de controle das fitas
+    memset(estados, 0, sizeof(estados));                                                //Zera estrutura de controle das fitas
 
     do {
         printf("\n=== Passagem %d ===\n", passagem++);
         
-        // Abre as fitas de entrada para leitura
+        //Abre as fitas de entrada para leitura
         for (int i = 0; i < FITAS; i++) {
             char nome[50];
             sprintf(nome, "fitas/fita%02d.bin", inicioEntrada + i);
-            estados[inicioEntrada + i].arquivo = fopen(nome, "rb");                     // Abre o arquivo na posição correspondente da struct
+            estados[inicioEntrada + i].arquivo = fopen(nome, "rb");                     //Abre o arquivo na posição correspondente da struct
             estados[inicioEntrada + i].blocosRestantes = numBlocos[inicioEntrada + i];  
             estados[inicioEntrada + i].elementosRestantes = nElem[inicioEntrada + i];
             estados[inicioEntrada + i].ativo = (numBlocos[inicioEntrada + i] > 0);
         }
 
-        // Abre fitas de saída (modo escrita) e zera contadores
+        //Abre fitas de saída (modo escrita) e zera contadores
         for (int i = 0; i < FITAS; i++) {
             char nome[50];
             sprintf(nome, "fitas/fita%02d.bin", inicioSaida + i);
@@ -168,7 +168,6 @@ void intercalacaoBalanceada(const char *inputFile, int totalRegs) {
             nElem[inicioSaida + i] = 0;
         }
 
-        int blocosProduzidos = 0;
         int elementosProduzidos = 0;
         int blocoAtual = 0;
         int tamanhoBloco = 0;
@@ -208,44 +207,43 @@ void intercalacaoBalanceada(const char *inputFile, int totalRegs) {
 
             if (fitasComDados == 0) break; // Se nenhuma fita tem dados, fim da intercalação
 
-            int fitaSaidaBloco = inicioSaida + (blocoAtual % FITAS);                    //Calcula qual a fita de saída do 
+            int fitaSaidaBloco = inicioSaida + (blocoAtual % FITAS);                    //Calcula qual a fita de saída do em que o bloco será escrito
             blocoAtual++;
 
             int elementosBloco = 0;
 
-            // Enquanto ainda houver registros nos blocos ativos
+            //Enquanto ainda houver registros nos blocos ativos
             while (fitasComDados > 0) {
-                int idxMenor = menorRegistroAtivo(memoria, fitasAtivas, FITAS);
-                if (idxMenor == -1) break;
+                int idxMenor = menorRegistroAtivo(memoria, fitasAtivas, FITAS);         //Encontra o índice do registro com a menor nota
+                if (idxMenor == -1) break;                                              //Se não encontrou, sai do loop
 
-                fwrite(&memoria[idxMenor], sizeof(Registro), 1, estados[fitaSaidaBloco].arquivo);
-                elementosBloco++;
-                elementosProduzidos++;
+                fwrite(&memoria[idxMenor], sizeof(Registro), 1, estados[fitaSaidaBloco].arquivo);       //Escreve o menor na fita de saída escolhida
+                elementosBloco++;                                                                       //Aumenta o número de elementos do bloco de saída
+                elementosProduzidos++;                                                                  //Aumenta o número de elementos produzidos
 
-                int fitaIdx = inicioEntrada + idxMenor;
-
-                if (registrosRestantesBloco[idxMenor] == 0 ||
-                    fread(&memoria[idxMenor], sizeof(Registro), 1, estados[fitaIdx].arquivo) != 1) {
-                    fitasAtivas[idxMenor] = 0;
-                    fitasComDados--;
-                    estados[fitaIdx].blocosRestantes--;
-                    registrosRestantesBloco[idxMenor] = 0;
-                    memset(&memoria[idxMenor], 0, sizeof(Registro));
+                int fitaIdx = inicioEntrada + idxMenor;                                                 //Encontra a fita da qual o menor registro foi retirado
+                
+                //Se não existem mais registros restantes no bloco ou não conseguiu ler
+                if (registrosRestantesBloco[idxMenor] == 0 || fread(&memoria[idxMenor], sizeof(Registro), 1, estados[fitaIdx].arquivo) != 1) {
+                    fitasAtivas[idxMenor] = 0;                                          //Desativa a fita no vetor 
+                    fitasComDados--;                                                    //Diminui o número de fitas com dados
+                    estados[fitaIdx].blocosRestantes--;                                 //Diminui o número de blocos restantes na fita de entrada
+                    registrosRestantesBloco[idxMenor] = 0;                              //Zera o número de registros restantes no bloco
+                    memset(&memoria[idxMenor], 0, sizeof(Registro));                    //Zera a posição do index do menor na memória 
                 } else {
-                    registrosRestantesBloco[idxMenor]--;
+                    registrosRestantesBloco[idxMenor]--;                                //Diminui o número de registros restantes no bloco
                 }
             }
 
-            numBlocos[fitaSaidaBloco]++;
-            nElem[fitaSaidaBloco] += elementosBloco;
-            blocosProduzidos++;
+            numBlocos[fitaSaidaBloco]++;                                                //Incrementa o número de blocos na fita de saída
+            nElem[fitaSaidaBloco] += elementosBloco;                                    //Incrementa o número de elementos na fita de saída
         }
 
-        // Fecha todas as fitas
+        //Fecha todas as fitas dentro da struct de estados
         for (int i = 0; i < TOTAL_FITAS; i++) {
             if (estados[i].arquivo) {
                 fclose(estados[i].arquivo);
-                estados[i].arquivo = NULL;
+                estados[i].arquivo = NULL;                                              
             }
         }
 
@@ -259,22 +257,23 @@ void intercalacaoBalanceada(const char *inputFile, int totalRegs) {
         inicioEntrada = inicioSaida;
         inicioSaida = (inicioSaida + FITAS) % TOTAL_FITAS;
         
-        numFitasComDados = 0;
+        numFitasComDados = 0;                                                           //Reseta o número de fitas com dados
+
         for (int i = 0; i < FITAS; i++) {
-            if (numBlocos[inicioEntrada + i] > 0) {
-                numFitasComDados++;
-                ultimaFitaComDados = inicioEntrada + i;
+            if (numBlocos[inicioEntrada + i] > 0) {                                     //Se o número de blocos da nova entrada for maior que 0
+                numFitasComDados++;                                                     //Aumenta o número de fitas com dados
+                ultimaFitaComDados = inicioEntrada + i;                                 //Atualiza o index da última fita com dados
             }
         }
 
-        printf("Fitas com dados: %d\n", numFitasComDados);
+        printf("Fitas com dados: %d\n", numFitasComDados);                              //Imprime quantas fitas têm dados
     } while (numFitasComDados > 1);
 
-    // Quando sobra uma única fita, converte para .txt
+    // Quando o processo termina e só sobra uma única fita, converte para .txt
     if (numFitasComDados == 1) {
-        char nomeFinal[TAM_NOME];
-        sprintf(nomeFinal, "fitas/fita%02d.bin", ultimaFitaComDados);
+        char nomeFinal[TAM_NOME];                                                       
+        sprintf(nomeFinal, "fitas/fita%02d.bin", ultimaFitaComDados);                   //Dá valor à variável com nome da fita que tem os dados ordenados
         printf("Arquivo ordenado: %s\n", nomeFinal);
-        bintxt(nomeFinal, "resultado.txt");
+        bintxt(nomeFinal, "resultado.txt");                                             //Realiza a conversão
     }
 }
