@@ -14,11 +14,14 @@ typedef struct {
     FILE *arquivo;
     int blocosRestantes;
     int elementosRestantes;
-    Registro registroAtual;
     short ativo;
 } FitaEstado;
 
 // Executa a intercalação balanceada nas fitas
+int numFitasPreenchidas(int elementos[], int inicio, int *ultimaFita);
+int menorRegistroAtivo(Registro registros[], short ativos[], int numFitas);
+void quickSort(Registro *v, int esquerda, int direita);
+void gerarBlocosOrdenados(const char *inputFile, int totalRegs, int numBlocos[], int nElem[]);
 void intercalacaoBalanceada(const char *inputFile, int totalBlocos);
 
 #endif // INTERCALACAO_BALANCEADA_H

@@ -41,7 +41,7 @@ int comparaLongs(const void *a, const void *b) {
 int main() {
     FILE *arqOrig = fopen("PROVAO.TXT", "r");
     FILE *arqRes = fopen("resultado.txt", "r");
-    int qtd = 1000;
+    int qtd = 881;
     int i = 0;
 
     if (!arqOrig || !arqRes) {

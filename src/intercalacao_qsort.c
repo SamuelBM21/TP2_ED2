@@ -6,6 +6,13 @@
 #include "../include/intercalacao_qsort.h"  
 #include "../include/conversor.h"  
 
+/*
+Nome: numFitasPreenchidas  
+Função: Conta quantas fitas possuem elementos válidos a partir de um índice e retorna o índice da última fita com dados.  
+Entrada: Vetor de elementos, índice inicial e ponteiro para armazenar o índice da última fita com dados.  
+Saída: Número de fitas preenchidas a partir do índice dado.  
+*/
+
 int numFitasPreenchidas(int elementos[], int inicio, int *ultimaFita) {
     int count = 0;
     *ultimaFita = -1;
@@ -13,29 +20,41 @@ int numFitasPreenchidas(int elementos[], int inicio, int *ultimaFita) {
     for (int i = 0; i < FITAS; i++) {
         if (elementos[inicio + i] > 0) {
             count++;
-            *ultimaFita = inicio + i;
+            *ultimaFita = inicio + i; // Atualiza a última fita válida
         }
     }
     return count;
 }
 
-// Função para encontrar o índice do menor registro ativo
+/*
+Nome: menorRegistroAtivo  
+Função: Retorna o índice do menor registro entre os ativos no vetor.  
+Entrada: Vetor de registros, vetor de flags de atividade e número de fitas.  
+Saída: Índice do menor registro entre os ativos, ou -1 se nenhum ativo.  
+*/
+
 int menorRegistroAtivo(Registro registros[], short ativos[], int numFitas) {
     int menor = -1;
     for (int i = 0; i < numFitas; i++) {
         if (ativos[i]) {
             if (menor == -1 || registros[i].nota < registros[menor].nota) {
-                menor = i;
+                menor = i; // Atualiza o menor valor encontrado
             }
         }
     }
     return menor;
 }
 
+/*
+Nome: quickSort  
+Função: Ordena um vetor de registros em ordem crescente de nota usando o algoritmo QuickSort.  
+Entrada: Vetor de registros, índices inicial e final da parte a ser ordenada.  
+Saída: --  
+*/
+
 void quickSort(Registro *v, int esquerda, int direita) {
-    // Implementação do QuickSort permanece a mesma
     if (esquerda >= direita) return;
-    Registro pivo = v[(esquerda + direita) / 2];
+    Registro pivo = v[(esquerda + direita) / 2]; // Pivô central
     int i = esquerda, j = direita;
     while (i <= j) {
         while (v[i].nota < pivo.nota) i++;
@@ -43,7 +62,7 @@ void quickSort(Registro *v, int esquerda, int direita) {
         if (i <= j) {
             Registro tmp = v[i];
             v[i] = v[j];
-            v[j] = tmp;
+            v[j] = tmp; // Troca os elementos
             i++;
             j--;
         }
@@ -52,6 +71,13 @@ void quickSort(Registro *v, int esquerda, int direita) {
     if (esquerda < j) quickSort(v, esquerda, j);
     if (i < direita) quickSort(v, i, direita);
 }
+
+/*
+Nome: gerarBlocosOrdenados  
+Função: Lê registros do arquivo de entrada, ordena blocos de tamanho fixo e os distribui ciclicamente entre as fitas de entrada.  
+Entrada: Nome do arquivo de entrada, número total de registros, vetores de blocos e elementos por fita.  
+Saída: -- (gera os arquivos binários das fitas com os blocos ordenados).  
+*/
 
 void gerarBlocosOrdenados(const char *inputFile, int totalRegs, int numBlocos[], int nElem[]) {
     FILE *entrada = fopen(inputFile, "rb");
@@ -63,12 +89,12 @@ void gerarBlocosOrdenados(const char *inputFile, int totalRegs, int numBlocos[],
     Registro memoria[TAM_MEM];
     int lidos = 0, fita = 0;
 
-    // Inicialização dos arrays
     for(int i = 0; i < TOTAL_FITAS; i++) {
         numBlocos[i] = 0;
         nElem[i] = 0;
     }
 
+    // Lê blocos de TAM_MEM registros, ordena e grava em uma fita
     while (lidos < totalRegs) {
         int cnt = 0;
         while (cnt < TAM_MEM && fread(&memoria[cnt], sizeof(Registro), 1, entrada) == 1) {
@@ -76,7 +102,7 @@ void gerarBlocosOrdenados(const char *inputFile, int totalRegs, int numBlocos[],
             lidos++;
         }
 
-        quickSort(memoria, 0, cnt - 1);
+        quickSort(memoria, 0, cnt - 1); // Ordena o bloco lido
 
         char nomeFita[TAM_NOME];
         sprintf(nomeFita, "fitas/fita%02d.bin", fita);
@@ -86,25 +112,27 @@ void gerarBlocosOrdenados(const char *inputFile, int totalRegs, int numBlocos[],
             exit(EXIT_FAILURE);
         }
 
-        size_t escritos = fwrite(memoria, sizeof(Registro), cnt, f);
-        if (escritos != (size_t)cnt) {
-            fprintf(stderr, "Erro na escrita em '%s'\n", nomeFita);
-            exit(EXIT_FAILURE);
-        }
+        fwrite(memoria, sizeof(Registro), cnt, f); // Escreve bloco ordenado na fita
         fclose(f);
         
         numBlocos[fita]++;
         nElem[fita] += cnt;
-        fita = (fita + 1) % FITAS;  // Rotação entre fitas
+        fita = (fita + 1) % FITAS; // Rotaciona para próxima fita
     }
     fclose(entrada);
 }
 
+/*
+Nome: intercalacaoBalanceada  
+Função: Realiza a intercalação balanceada dos blocos ordenados das fitas até gerar um arquivo totalmente ordenado.  
+Entrada: Nome do arquivo de entrada e número total de registros.  
+Saída: Gera o arquivo de saída ordenado 'resultado.txt'.  
+*/
+
 void intercalacaoBalanceada(const char *inputFile, int totalRegs) {
-    system("rm -rf fitas");
-    system("mkdir -p fitas");
+    system("rm -rf fitas");        // Remove diretório antigo
+    system("mkdir -p fitas");      // Cria novo diretório de fitas
     
-    // Inicialização de variáveis
     int numBlocos[TOTAL_FITAS] = {0};
     int nElem[TOTAL_FITAS] = {0};
     int inicioEntrada = 0;
@@ -113,27 +141,25 @@ void intercalacaoBalanceada(const char *inputFile, int totalRegs) {
     int passagem = 0;
     int numFitasComDados;
 
-    // Gerar blocos iniciais
     gerarBlocosOrdenados(inputFile, totalRegs, numBlocos, nElem);
 
-    // Inicializar estados das fitas
     FitaEstado estados[TOTAL_FITAS];
-    memset(estados, 0, sizeof(estados));
+    memset(estados, 0, sizeof(estados)); // Zera estrutura de controle das fitas
 
     do {
         printf("\n=== Passagem %d ===\n", passagem++);
         
-        // Abrir fitas de entrada
+        // Abre as fitas de entrada para leitura
         for (int i = 0; i < FITAS; i++) {
             char nome[50];
             sprintf(nome, "fitas/fita%02d.bin", inicioEntrada + i);
-            estados[inicioEntrada + i].arquivo = fopen(nome, "rb");
-            estados[inicioEntrada + i].blocosRestantes = numBlocos[inicioEntrada + i];
+            estados[inicioEntrada + i].arquivo = fopen(nome, "rb");                     // Abre o arquivo na posição correspondente da struct
+            estados[inicioEntrada + i].blocosRestantes = numBlocos[inicioEntrada + i];  
             estados[inicioEntrada + i].elementosRestantes = nElem[inicioEntrada + i];
             estados[inicioEntrada + i].ativo = (numBlocos[inicioEntrada + i] > 0);
         }
 
-        // Abrir fitas de saída (limpar arquivos existentes)
+        // Abre fitas de saída (modo escrita) e zera contadores
         for (int i = 0; i < FITAS; i++) {
             char nome[50];
             sprintf(nome, "fitas/fita%02d.bin", inicioSaida + i);
@@ -142,53 +168,52 @@ void intercalacaoBalanceada(const char *inputFile, int totalRegs) {
             nElem[inicioSaida + i] = 0;
         }
 
-        // Contadores para nova passagem
         int blocosProduzidos = 0;
         int elementosProduzidos = 0;
         int blocoAtual = 0;
+        int tamanhoBloco = 0;
 
         while (1) {
             Registro memoria[FITAS];
             short fitasAtivas[FITAS] = {0};
-            int registrosRestantesBloco[FITAS] = {0};  // registros que ainda faltam do bloco atual
+            int registrosRestantesBloco[FITAS] = {0};
             int fitasComDados = 0;
 
-            // Carregar primeiro registro do primeiro bloco de cada fita
+            // Carrega o primeiro registro de cada fita com bloco disponível
             for (int i = 0; i < FITAS; i++) {
                 int idx = inicioEntrada + i;
-
-                if (estados[idx].ativo && estados[idx].blocosRestantes > 0) {
-                    // Estimar tamanho médio do bloco da fita
-                    //int tamanhoBloco = numBlocos[idx] > 0 ? nElem[idx] / numBlocos[idx] : 0;
-                    int tamanhoBloco = numBlocos[idx] > 0 ? (nElem[idx] + numBlocos[idx] - 1) / numBlocos[idx] : 0;
-
-                    registrosRestantesBloco[i] = tamanhoBloco;
-                    printf("Registros Restantes %d: %d\n", i , registrosRestantesBloco[i]);
-                    if (tamanhoBloco > 0 &&
-                        fread(&memoria[i], sizeof(Registro), 1, estados[idx].arquivo) == 1) {
-                        fitasAtivas[i] = 1;
-                        fitasComDados++;
-                        registrosRestantesBloco[i]--;  // já lemos um
-                    } else {
-                        estados[idx].ativo = 0;
-                        fitasAtivas[i] = 0;
-                        registrosRestantesBloco[i] = 0;
+                if (estados[idx].ativo && estados[idx].blocosRestantes > 0) {           //Se o estado é ativo e existem blocos restantes
+                    
+                    //Se o número de elementos da fita é divisível pela quantidade esperada na passagem e não está no último bloco
+                    if((nElem[idx]%((int)pow(20,passagem))) == 0 || estados[idx].blocosRestantes != 1){  
                     }
-                } else {
-                    fitasAtivas[i] = 0;
-                    registrosRestantesBloco[i] = 0;
+                    else{
+                        tamanhoBloco = nElem[idx]%(int)pow(20,passagem);                //Se é o último, pega o resto dos itens
+                    }
+                    
+                    registrosRestantesBloco[i] = tamanhoBloco;                          //Atualiza (inicia) a quantidade no de registros restantes por bloco
+
+                    //Se o tamanho do bloco é maior que 0 e conseguiu ler um registro para a memória
+                    if (tamanhoBloco > 0 && fread(&memoria[i], sizeof(Registro), 1, estados[idx].arquivo) == 1) {
+                        fitasAtivas[i] = 1;                                             //"Ativa" a fita no vetor 
+                        fitasComDados++;                                                //Aumenta o número de fitas com dados
+                        registrosRestantesBloco[i]--;                                   //Por ter lido, diminui o número de registros restantes 
+                    } else {
+                        estados[idx].ativo = 0;                                         //Desativa a fita no vetor de estados
+                        fitasAtivas[i] = 0;                                             //"Desativa" a fita no vetor 
+                        registrosRestantesBloco[i] = 0;                                 //Acabaram os registros restantes
+                    }
                 }
             }
 
-            if (fitasComDados == 0) break;  // acabou todos os blocos
+            if (fitasComDados == 0) break; // Se nenhuma fita tem dados, fim da intercalação
 
-            // Fita de saída onde esse bloco será armazenado
-            int fitaSaidaBloco = inicioSaida + (blocoAtual % FITAS);
+            int fitaSaidaBloco = inicioSaida + (blocoAtual % FITAS);                    //Calcula qual a fita de saída do 
             blocoAtual++;
 
             int elementosBloco = 0;
 
-            // Começa a intercalação de um conjunto de blocos (um de cada fita)
+            // Enquanto ainda houver registros nos blocos ativos
             while (fitasComDados > 0) {
                 int idxMenor = menorRegistroAtivo(memoria, fitasAtivas, FITAS);
                 if (idxMenor == -1) break;
@@ -201,8 +226,6 @@ void intercalacaoBalanceada(const char *inputFile, int totalRegs) {
 
                 if (registrosRestantesBloco[idxMenor] == 0 ||
                     fread(&memoria[idxMenor], sizeof(Registro), 1, estados[fitaIdx].arquivo) != 1) {
-                    
-                    // Acabou o bloco ou não há mais o que ler da fita
                     fitasAtivas[idxMenor] = 0;
                     fitasComDados--;
                     estados[fitaIdx].blocosRestantes--;
@@ -213,13 +236,12 @@ void intercalacaoBalanceada(const char *inputFile, int totalRegs) {
                 }
             }
 
-            // Finaliza e contabiliza o bloco criado na fita de saída
             numBlocos[fitaSaidaBloco]++;
             nElem[fitaSaidaBloco] += elementosBloco;
             blocosProduzidos++;
         }
 
-        // Fechar todas as fitas
+        // Fecha todas as fitas
         for (int i = 0; i < TOTAL_FITAS; i++) {
             if (estados[i].arquivo) {
                 fclose(estados[i].arquivo);
@@ -227,17 +249,16 @@ void intercalacaoBalanceada(const char *inputFile, int totalRegs) {
             }
         }
 
-        // Atualizar contadores para próxima passagem
+        // Zera contadores antigos
         for (int i = 0; i < FITAS; i++) {
             numBlocos[inicioEntrada + i] = 0;
             nElem[inicioEntrada + i] = 0;
         }
 
-        // Preparar próxima iteração
+        // Alterna entrada/saída para próxima passagem
         inicioEntrada = inicioSaida;
         inicioSaida = (inicioSaida + FITAS) % TOTAL_FITAS;
         
-        // Contar fitas com dados
         numFitasComDados = 0;
         for (int i = 0; i < FITAS; i++) {
             if (numBlocos[inicioEntrada + i] > 0) {
@@ -249,7 +270,7 @@ void intercalacaoBalanceada(const char *inputFile, int totalRegs) {
         printf("Fitas com dados: %d\n", numFitasComDados);
     } while (numFitasComDados > 1);
 
-    // Gerar arquivo final
+    // Quando sobra uma única fita, converte para .txt
     if (numFitasComDados == 1) {
         char nomeFinal[TAM_NOME];
         sprintf(nomeFinal, "fitas/fita%02d.bin", ultimaFitaComDados);

@@ -1,6 +1,6 @@
 # Compilador e flags
 CC = gcc
-CFLAGS = -Wall -Iinclude 
+CFLAGS = -Wall -g -Iinclude 
 
 # Diretórios
 SRC_DIR = src
