@@ -38,10 +38,10 @@ int comparaLongs(const void *a, const void *b) {
     return (la > lb) - (la < lb);
 }
 
-int main() {
+int main(int argc, char* argv[]) {
     FILE *arqOrig = fopen("PROVAO.TXT", "r");
     FILE *arqRes = fopen("resultado.txt", "r");
-    int qtd = 881;
+    int qtd = atoi(argv[1]);
     int i = 0;
 
     if (!arqOrig || !arqRes) {
