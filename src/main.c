@@ -21,7 +21,7 @@ int main(int argc, char* argv[]) {
     }
     
     int situacao = atoi(argv[3]);                                       //Converte argv na posição 3 para ter a situação do arquivo
-    char flag[10] = "";
+    char *flag = NULL;
     if (argc == 5){                                                     //Se tem 5 argumentos
         strcpy(flag,argv[4]);
         if(strcmp(flag,"[-P]") != 0){                                   //Se a flag colocada não for a esperada

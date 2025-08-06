@@ -5,7 +5,7 @@ CFLAGS = -Wall -g -Iinclude
 # Diretórios
 SRC_DIR = src
 OBJ_DIR = obj
-BIN = exe
+BIN = ordena
 
 # Arquivos fonte e objeto
 SRCS = $(wildcard $(SRC_DIR)/*.c)
