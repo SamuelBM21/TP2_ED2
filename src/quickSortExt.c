@@ -16,6 +16,7 @@ void QuicksortExterno(FILE **ArqLi , FILE **ArqEi , FILE **ArqLEs, int Esq, int 
 }
 
 void LeSup(FILE **ArqLEs, Registro *UltLido , int *Ls , bool *OndeLer) {
+    fflush(*ArqLEs);
     fseek(*ArqLEs, (*Ls - 1) * sizeof(Registro), SEEK_SET);
     fread(UltLido, sizeof(Registro), 1, *ArqLEs);
     (*Ls)--;
@@ -23,6 +24,7 @@ void LeSup(FILE **ArqLEs, Registro *UltLido , int *Ls , bool *OndeLer) {
 }
 
 void LeInf(FILE **ArqLi , Registro *UltLido , int *Li , bool *OndeLer) {
+    fflush(*ArqLi);
     fread(UltLido, sizeof(Registro), 1, *ArqLi);
     (*Li)++;
     *OndeLer = true;
@@ -36,11 +38,13 @@ void InserirArea(TipoArea *Area, Registro *UltLido , int *NRArea) {
 void EscreveMax(FILE **ArqLEs, Registro R, int *Es) {
     fseek(*ArqLEs, (*Es - 1) * sizeof(Registro), SEEK_SET);
     fwrite(&R, sizeof(Registro), 1, *ArqLEs);
+    fflush(*ArqLEs);
     (*Es)--;
 }
 
 void EscreveMin(FILE **ArqEi , Registro R, int *Ei) {
     fwrite(&R, sizeof(Registro), 1, *ArqEi);
+    fflush(*ArqEi);
     (*Ei)++;
 }
 

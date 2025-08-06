@@ -72,11 +72,17 @@ int main(int argc, char* argv[]) {
         
             if (!li || !ei || !les) {                               //Se não conseguiu abrir
                 perror("Erro ao abrir arquivos");
+                if(li) fclose(li);
+                if(ei) fclose(ei);
+                if(les) fclose(les);
                 return 1;
             }
 
             printf("Chamando quicksort com quantidade = %d\n", quantidade);
             QuicksortExterno(&li, &ei, &les, 1, quantidade);        //Chama o quickSort
+            fclose(li);
+            fclose(ei);
+            fclose(les);
             break;
     }
     return 0;
