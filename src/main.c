@@ -55,8 +55,11 @@ int main(int argc, char* argv[]) {
             printf("Chamando intercalação balanceada com quantidade = %d\n", quantidade);
             intercalacaoBalanceadaQS("saida.bin",quantidade,flag);
             break;
-        case 2:                                                     //Intercalação Balanceada - Seleção por substituição
-        
+        case 2:  
+            txtbin(in,out,quantidade);                                                   //Intercalação Balanceada - Seleção por substituição
+            printf("Chamando intercalação balanceada com quantidade = %d\n", quantidade);
+            intercalacaoBalanceadaSS("saida.bin",quantidade);
+            gerarResumoFitas(40);
             break;
         case 3:                                                     //QuickSort Externo
             txtbin(in,out,quantidade);
