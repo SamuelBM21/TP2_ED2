@@ -312,11 +312,12 @@ void intercalacaoBalanceadaQS(const char *inputFile, int totalRegs, char *flag) 
     }
 }
 
-
-
-
-
-
+/*
+Nome: heapify  
+Função: Reorganiza uma estrutura de heap mínimo a partir de um índice específico, mantendo a propriedade de heap.  
+Entrada: Vetor de elementos do heap, tamanho total do heap e índice a partir do qual a reorganização será feita.  
+Saída: Heap reorganizado com o menor elemento na raiz.  
+*/
 
 void heapify(HeapElem heap[], int n, int i) {
     int menor = i;
@@ -342,11 +343,24 @@ void heapify(HeapElem heap[], int n, int i) {
     }
 }
 
+/*
+Nome: construirHeapMin  
+Função: Constrói um heap mínimo a partir de um vetor de elementos, aplicando heapify de forma bottom-up.  
+Entrada: Vetor de elementos do heap e seu tamanho.  
+Saída: Vetor reorganizado em forma de heap mínimo.  
+*/
 void construirHeapMin(HeapElem heap[], int n) {
     for (int i = n / 2 - 1; i >= 0; i--) {
         heapify(heap, n, i);
     }
 }
+
+/*
+Nome: gerarBlocosOrdenadosSS  
+Função: Gera os blocos ordenados utilizando a estratégia de substituição natural com heap.  
+Entrada: Nome do arquivo de entrada, número total de registros, vetores para armazenar o número de blocos e elementos por fita.  
+Saída: Blocos ordenados são distribuídos entre as fitas, marcando fim de bloco quando necessário.  
+*/
 
 void gerarBlocosOrdenadosSS(const char *inputFile, int totalRegs, int numBlocos[], int nElem[]) {
     system("rm -rf fitas");
@@ -366,13 +380,15 @@ void gerarBlocosOrdenadosSS(const char *inputFile, int totalRegs, int numBlocos[
     HeapElem heap[TAM_MEM];
     int lidos = 0, fita = 0;
     int tamanhoHeap = 0;
+
+    //Enquanto a memoria(heap) não foi preenchida e foi possível ler um registro 
     while (tamanhoHeap < TAM_MEM && fread(&heap[tamanhoHeap].reg, sizeof(Registro), 1, entrada) == 1) {
         heap[tamanhoHeap].congelado = 0;
         lidos++;
         tamanhoHeap++;
     }
 
-    construirHeapMin(heap, tamanhoHeap);
+    construirHeapMin(heap, tamanhoHeap);                                //Constrói o heap mínimo
 
     Registro ultimoSaido;
     int novoBloco = 1;
@@ -382,35 +398,31 @@ void gerarBlocosOrdenadosSS(const char *inputFile, int totalRegs, int numBlocos[
     FILE *fitaAtual = NULL;
 
     while (tamanhoHeap > 0) {
-        // --- LÓGICA DE ABERTURA DE ARQUIVO CORRIGIDA ---
         if (fitaAtual == NULL) {
             sprintf(nomeFita, "fitas/fita%02d.bin", fita);
-            // Primeiro, tenta abrir para atualização. Funciona se o arquivo já existe.
-            fitaAtual = fopen(nomeFita, "r+b");
-            if (fitaAtual == NULL) {
-                // Se falhou, o arquivo não existe. Cria ele com "w+b".
+            fitaAtual = fopen(nomeFita, "r+b");                                                 //Abre a fita para leitura e escrita
+            if (fitaAtual == NULL) {                                                            //Se falhou, o arquivo não existe. Cria ele com "w+b".
                 fitaAtual = fopen(nomeFita, "w+b");
                 if (!fitaAtual) {
                     fprintf(stderr, "Erro ao criar '%s': %s\n", nomeFita, strerror(errno));
                     exit(EXIT_FAILURE);
                 }
             }
-            // Garante que a escrita começará no final do arquivo, preservando blocos anteriores.
-            fseek(fitaAtual, 0, SEEK_END);
+            fseek(fitaAtual, 0, SEEK_END);                                                      //Garante que a escrita começará no final do arquivo, preservando blocos anteriores.
             blocoTam = 0;
         }
-        // --- FIM DA CORREÇÃO ---
 
         HeapElem menor = heap[0];
         Registro temp = menor.reg;
         temp.fimDeBloco = 0;
         
-        fwrite(&temp, sizeof(Registro), 1, fitaAtual);
+        fwrite(&temp, sizeof(Registro), 1, fitaAtual);                                          //Escreve o menor registro na fita atual
         blocoTam++;
         ultimoSaido = temp;
         novoBloco = 0;
 
         Registro novo;
+        //Se ainda não foram lidos todos os pedidos e ainda é possível ler 
         if (lidos < totalRegs && fread(&novo, sizeof(Registro), 1, entrada) == 1) {
             lidos++;
             heap[0].reg = novo;
@@ -420,41 +432,46 @@ void gerarBlocosOrdenadosSS(const char *inputFile, int totalRegs, int numBlocos[
             tamanhoHeap--;
         }
 
+        //Se ainda tiverem registros no heap
         if (tamanhoHeap > 0) {
             heapify(heap, tamanhoHeap, 0);
         }
 
         int todosCongelados = 1;
-        if (tamanhoHeap > 0) { // Evita loop infinito se o heap esvaziar aqui
+        if (tamanhoHeap > 0) {                                                                  //Se o heap não está vazio
+            //Percorre o heap verificando se algum não está congelado
             for (int i = 0; i < tamanhoHeap; i++) {
-                if (!heap[i].congelado) {
+                if (!heap[i].congelado) {                                               
                     todosCongelados = 0;
                     break;
                 }
             }
         }
         
-        if (todosCongelados) {
-            if (blocoTam > 0) { // Garante que algo foi escrito antes de marcar
-                fseek(fitaAtual, -sizeof(Registro), SEEK_CUR);
+        if (todosCongelados) {                                                                  //Se todos os registros foram marcados
+            if (blocoTam > 0) {                                                                 //Garante que algo foi escrito antes de marcar
+                fseek(fitaAtual, -sizeof(Registro), SEEK_CUR);                                  //Encontra o último registro e o marca como fim do bloco
                 ultimoSaido.fimDeBloco = 1;
                 fwrite(&ultimoSaido, sizeof(Registro), 1, fitaAtual);
                 fflush(fitaAtual);
             }
             
+            //Incrementa o número de elementos e blocos de tal fita
             numBlocos[fita]++;
             nElem[fita] += blocoTam;
-            fclose(fitaAtual);
+
+            fclose(fitaAtual);                                                                  //Fecha a fita
             fitaAtual = NULL;
 
             fita = (fita + 1) % FITAS;
             novoBloco = 1;
 
             for (int i = 0; i < tamanhoHeap; i++) {
-                heap[i].congelado = 0;
+                heap[i].congelado = 0;                                                          //Desmarca todos os registros
             }
+
             if (tamanhoHeap > 0) {
-                construirHeapMin(heap, tamanhoHeap);
+                construirHeapMin(heap, tamanhoHeap);                                            //Constrói o heap novamente se o tamanho for maior que 0
             }
         }
     }
@@ -469,6 +486,13 @@ void gerarBlocosOrdenadosSS(const char *inputFile, int totalRegs, int numBlocos[
     }
     fclose(entrada);
 }
+
+/*
+Nome: intercalacaoBalanceadaSS  
+Função: Realiza a intercalação balanceada dos blocos ordenados das fitas até gerar um arquivo totalmente ordenado.  
+Entrada: Nome do arquivo de entrada, número total de registros e flag para saber se os registros devem ser imprimidos.  
+Saída: Gera o arquivo de saída ordenado.  
+*/ 
 
 void intercalacaoBalanceadaSS(const char *inputFile, int totalRegs, char *flag) {
     system("rm -rf fitas");
@@ -603,6 +627,13 @@ void intercalacaoBalanceadaSS(const char *inputFile, int totalRegs, char *flag) 
         bintxt(nomeFinal, "resultado.txt");
     }
 }
+
+/*
+Nome: gerarResumoFitas  
+Função: Gera arquivos .txt com o conteúdo de cada fita binária, separando blocos por quebras de linha.  
+Entrada: Número total de fitas a serem processadas.  
+Saída: Arquivos .txt correspondentes ao conteúdo das fitas, com separação clara entre blocos.  
+*/
 
 void gerarResumoFitas(int numFitas) {
     char nomeFita[100];
