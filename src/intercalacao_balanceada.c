@@ -272,11 +272,42 @@ void intercalacaoBalanceadaQS(const char *inputFile, int totalRegs, char *flag) 
         printf("Fitas com dados: %d\n", numFitasComDados);                              //Imprime quantas fitas têm dados
     } while (numFitasComDados > 1);
 
+    Registro reg;
     // Quando o processo termina e só sobra uma única fita, converte para .txt
     if (numFitasComDados == 1) {
         char nomeFinal[TAM_NOME];                                                       
         sprintf(nomeFinal, "fitas/fita%02d.bin", ultimaFitaComDados);                   //Dá valor à variável com nome da fita que tem os dados ordenados
         printf("Arquivo ordenado: %s\n", nomeFinal);
+        if(flag){                                                                       //Se tiver sido passada a flag
+            FILE *ord = fopen(nomeFinal, "rb");
+            FILE *org = fopen(inputFile, "rb");
+            printf("Registros Originais: \n");
+            for(int i = 0; i<totalRegs; i++){                                           //Imprime como os registros estavam originalmente
+                fread(&reg,sizeof(Registro),1,org);
+                printf(
+                    "%08ld %05.1f %2s %-50s %-30s\n",  // Formato fixo
+                    reg.chave, 
+                    reg.nota, 
+                    reg.estado, 
+                    reg.cidade, 
+                    reg.curso
+                );
+            }
+            printf("Registros Ordenados: \n");
+            for(int i = 0; i<totalRegs; i++){                                           //Imprime o resultado ordenado
+                fread(&reg,sizeof(Registro),1,ord);
+                printf(
+                    "%08ld %05.1f %2s %-50s %-30s\n",  // Formato fixo
+                    reg.chave, 
+                    reg.nota, 
+                    reg.estado, 
+                    reg.cidade, 
+                    reg.curso
+                );
+            }
+            fclose(ord);
+            fclose(org);
+        }
         bintxt(nomeFinal, "resultado.txt");                                             //Realiza a conversão
     }
 }
