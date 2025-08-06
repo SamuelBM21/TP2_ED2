@@ -280,3 +280,183 @@ void intercalacaoBalanceadaQS(const char *inputFile, int totalRegs, char *flag) 
         bintxt(nomeFinal, "resultado.txt");                                             //Realiza a conversão
     }
 }
+
+
+
+
+
+
+
+void heapify(HeapElem heap[], int n, int i) {
+    int menor = i;
+    int esq = 2 * i + 1;
+    int dir = 2 * i + 2;
+
+    // Considera congelados como infinitamente maiores
+    if (esq < n && 
+        (!heap[esq].congelado && 
+        (heap[menor].congelado || heap[esq].reg.chave < heap[menor].reg.chave)))
+        menor = esq;
+
+    if (dir < n && 
+        (!heap[dir].congelado &&
+        (heap[menor].congelado || heap[dir].reg.chave < heap[menor].reg.chave)))
+        menor = dir;
+
+    if (menor != i) {
+        HeapElem temp = heap[i];
+        heap[i] = heap[menor];
+        heap[menor] = temp;
+        heapify(heap, n, menor);
+    }
+}
+
+void construirHeapMin(HeapElem heap[], int n) {
+    for (int i = n / 2 - 1; i >= 0; i--) {
+        heapify(heap, n, i);
+    }
+}
+
+void gerarBlocosOrdenadosSS(const char *inputFile, int totalRegs, int numBlocos[], int nElem[]) {
+    system("rm -rf fitas");
+    system("mkdir -p fitas");
+
+    FILE *entrada = fopen(inputFile, "rb");
+    if (!entrada) {
+        fprintf(stderr, "Erro ao abrir '%s': %s\n", inputFile, strerror(errno));
+        exit(EXIT_FAILURE);
+    }
+
+    for (int i = 0; i < TOTAL_FITAS; i++) {
+        numBlocos[i] = 0;
+        nElem[i] = 0;
+    }
+
+    HeapElem heap[TAM_MEM];
+    int lidos = 0, fita = 0;
+
+    // Carrega o heap inicialmente
+    int tamanhoHeap = 0;
+    while (tamanhoHeap < TAM_MEM && fread(&heap[tamanhoHeap].reg, sizeof(Registro), 1, entrada) == 1) {
+        heap[tamanhoHeap].congelado = 0;
+        lidos++;
+        tamanhoHeap++;
+    }
+
+    construirHeapMin(heap, tamanhoHeap);
+
+    Registro ultimoSaido = {.chave = -1};
+    int blocoTam = 0;
+
+    char nomeFita[TAM_NOME];
+    sprintf(nomeFita, "fitas/fita%02d.bin", fita);
+    FILE *fitaAtual = fopen(nomeFita, "ab");
+    if (!fitaAtual) {
+        fprintf(stderr, "Erro ao criar '%s': %s\n", nomeFita, strerror(errno));
+        exit(EXIT_FAILURE);
+    }
+
+    while (tamanhoHeap > 0) {
+        HeapElem menor = heap[0];
+
+        heap[0].reg.fimDeBloco = 0;  // Marca como NÃO sendo fim de bloco (padrão)
+        fwrite(&menor.reg, sizeof(Registro), 1, fitaAtual);
+        ultimoSaido = menor.reg;
+        blocoTam++;
+
+        Registro novo;
+        if (lidos < totalRegs && fread(&novo, sizeof(Registro), 1, entrada) == 1) {
+            lidos++;
+            heap[0].reg = novo;
+            heap[0].congelado = (novo.chave < ultimoSaido.chave);
+        } else {
+            // Sem novos registros, remove do heap
+            heap[0] = heap[tamanhoHeap - 1];
+            tamanhoHeap--;
+        }
+
+        construirHeapMin(heap, tamanhoHeap);
+
+        // Verifica se todos estão congelados
+        int todosCongelados = 1;
+        for (int i = 0; i < tamanhoHeap; i++) {
+            if (!heap[i].congelado) {
+                todosCongelados = 0;
+                break;
+            }
+        }
+
+        if (todosCongelados) {
+            // Marca o último registro gravado como fim de bloco
+            fseek(fitaAtual, -sizeof(Registro), SEEK_CUR); // Volta para o último registro
+            ultimoSaido.fimDeBloco = 1;
+            fwrite(&ultimoSaido, sizeof(Registro), 1, fitaAtual);
+            fclose(fitaAtual);
+            numBlocos[fita]++;
+            nElem[fita] += blocoTam;
+            fita = (fita + 1) % FITAS;
+
+            // Descongela todos os registros restantes
+            for (int i = 0; i < tamanhoHeap; i++) {
+                heap[i].congelado = 0;
+            }
+
+            construirHeapMin(heap, tamanhoHeap);
+
+            // Recomeça novo bloco
+            blocoTam = 0;
+            sprintf(nomeFita, "fitas/fita%02d.bin", fita);
+            fitaAtual = fopen(nomeFita, "ab");
+            if (!fitaAtual) {
+                fprintf(stderr, "Erro ao criar '%s': %s\n", nomeFita, strerror(errno));
+                exit(EXIT_FAILURE);
+            }
+        }
+    }
+
+    // Finaliza último bloco
+    if (blocoTam > 0) {
+        fseek(fitaAtual, -sizeof(Registro), SEEK_CUR);
+        ultimoSaido.fimDeBloco = 1;
+        fwrite(&ultimoSaido, sizeof(Registro), 1, fitaAtual);
+
+        fclose(fitaAtual);
+        numBlocos[fita]++;
+        nElem[fita] += blocoTam;
+    }
+
+    fclose(entrada);
+}
+
+void gerarResumoFitas(int numFitas) {
+    char nomeFita[100];
+    char nomeSaida[100];
+    FILE *fita, *saida;
+    Registro reg;
+
+    for (int i = 0; i < numFitas; i++) {
+        sprintf(nomeFita, "fitas/fita%02d.bin", i);
+        sprintf(nomeSaida, "fita%02d.txt", i);
+
+        fita = fopen(nomeFita, "rb");
+        saida = fopen(nomeSaida, "w");
+
+        if (!fita || !saida) {
+            printf("Erro ao abrir arquivos da fita %d\n", i);
+            continue;
+        }
+
+        fprintf(saida, "FITA %d\n", i);
+
+        while (fread(&reg, sizeof(Registro), 1, fita) == 1) {
+            fprintf(saida, "%ld, ", reg.chave);
+            if (reg.fimDeBloco)
+                fprintf(saida, "\n\n\n"); // quebra de linha ao fim do bloco
+        }
+
+        fclose(fita);
+        fclose(saida);
+    }
+
+    printf("Arquivos .txt gerados com sucesso.\n");
+}
