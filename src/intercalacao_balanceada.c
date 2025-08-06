@@ -343,39 +343,47 @@ void gerarBlocosOrdenadosSS(const char *inputFile, int totalRegs, int numBlocos[
 
     construirHeapMin(heap, tamanhoHeap);
 
-    // Inicializa sem valor prévio
     Registro ultimoSaido;
-    int novoBloco = 1; // Flag para identificar início de novo bloco
+    int novoBloco = 1;
     int blocoTam = 0;
 
     char nomeFita[TAM_NOME];
-    sprintf(nomeFita, "fitas/fita%02d.bin", fita);
-    FILE *fitaAtual = fopen(nomeFita, "ab");
-    if (!fitaAtual) {
-        fprintf(stderr, "Erro ao criar '%s': %s\n", nomeFita, strerror(errno));
-        exit(EXIT_FAILURE);
-    }
+    FILE *fitaAtual = NULL;
 
     while (tamanhoHeap > 0) {
-        HeapElem menor = heap[0];
+        // --- LÓGICA DE ABERTURA DE ARQUIVO CORRIGIDA ---
+        if (fitaAtual == NULL) {
+            sprintf(nomeFita, "fitas/fita%02d.bin", fita);
+            // Primeiro, tenta abrir para atualização. Funciona se o arquivo já existe.
+            fitaAtual = fopen(nomeFita, "r+b");
+            if (fitaAtual == NULL) {
+                // Se falhou, o arquivo não existe. Cria ele com "w+b".
+                fitaAtual = fopen(nomeFita, "w+b");
+                if (!fitaAtual) {
+                    fprintf(stderr, "Erro ao criar '%s': %s\n", nomeFita, strerror(errno));
+                    exit(EXIT_FAILURE);
+                }
+            }
+            // Garante que a escrita começará no final do arquivo, preservando blocos anteriores.
+            fseek(fitaAtual, 0, SEEK_END);
+            blocoTam = 0;
+        }
+        // --- FIM DA CORREÇÃO ---
 
-        // Grava cópia modificável do registro
+        HeapElem menor = heap[0];
         Registro temp = menor.reg;
         temp.fimDeBloco = 0;
+        
         fwrite(&temp, sizeof(Registro), 1, fitaAtual);
         blocoTam++;
-
-        // Atualiza último registro e estado
         ultimoSaido = temp;
-        novoBloco = 0; // Já não é mais o primeiro do bloco
+        novoBloco = 0;
 
-        
         Registro novo;
         if (lidos < totalRegs && fread(&novo, sizeof(Registro), 1, entrada) == 1) {
             lidos++;
             heap[0].reg = novo;
-            // Primeiro registro nunca é congelado
-            heap[0].congelado = (novoBloco) ? 0 : (novo.nota < ultimoSaido.nota); // ALTERADO
+            heap[0].congelado = (novo.nota < ultimoSaido.nota);
         } else {
             heap[0] = heap[tamanhoHeap - 1];
             tamanhoHeap--;
@@ -386,48 +394,40 @@ void gerarBlocosOrdenadosSS(const char *inputFile, int totalRegs, int numBlocos[
         }
 
         int todosCongelados = 1;
-        for (int i = 0; i < tamanhoHeap; i++) {
-            if (!heap[i].congelado) {
-                todosCongelados = 0;
-                break;
+        if (tamanhoHeap > 0) { // Evita loop infinito se o heap esvaziar aqui
+            for (int i = 0; i < tamanhoHeap; i++) {
+                if (!heap[i].congelado) {
+                    todosCongelados = 0;
+                    break;
+                }
             }
         }
-
+        
         if (todosCongelados) {
-            // Retrocede e marca último registro como fim de bloco
-            fseek(fitaAtual, -sizeof(Registro), SEEK_CUR);
-            ultimoSaido.fimDeBloco = 1;
-            fwrite(&ultimoSaido, sizeof(Registro), 1, fitaAtual);
-            fflush(fitaAtual);
+            if (blocoTam > 0) { // Garante que algo foi escrito antes de marcar
+                fseek(fitaAtual, -sizeof(Registro), SEEK_CUR);
+                ultimoSaido.fimDeBloco = 1;
+                fwrite(&ultimoSaido, sizeof(Registro), 1, fitaAtual);
+                fflush(fitaAtual);
+            }
             
-            fclose(fitaAtual);
             numBlocos[fita]++;
             nElem[fita] += blocoTam;
-            fita = (fita + 1) % FITAS;
-            blocoTam = 0;
-            novoBloco = 1; // Próximo será novo bloco
+            fclose(fitaAtual);
+            fitaAtual = NULL;
 
-            // Resetar estado do heap
+            fita = (fita + 1) % FITAS;
+            novoBloco = 1;
+
             for (int i = 0; i < tamanhoHeap; i++) {
                 heap[i].congelado = 0;
             }
             if (tamanhoHeap > 0) {
                 construirHeapMin(heap, tamanhoHeap);
             }
-
-            // Preparar nova fita se houver dados
-            if (tamanhoHeap > 0) {
-                sprintf(nomeFita, "fitas/fita%02d.bin", fita);
-                fitaAtual = fopen(nomeFita, "ab");
-                if (!fitaAtual) {
-                    fprintf(stderr, "Erro ao criar '%s': %s\n", nomeFita, strerror(errno));
-                    exit(EXIT_FAILURE);
-                }
-            }
         }
     }
 
-    // Finalizar último bloco se necessário
     if (blocoTam > 0 && fitaAtual) {
         fseek(fitaAtual, -sizeof(Registro), SEEK_CUR);
         ultimoSaido.fimDeBloco = 1;
@@ -452,7 +452,6 @@ void intercalacaoBalanceadaSS(const char *inputFile, int totalRegs, char *flag) 
     int passagem = 0;
     int numFitasComDados;
 
-    // Gera blocos ordenados com substituição por seleção
     gerarBlocosOrdenadosSS(inputFile, totalRegs, numBlocos, nElem);
 
     FitaEstado estados[TOTAL_FITAS];
@@ -461,17 +460,15 @@ void intercalacaoBalanceadaSS(const char *inputFile, int totalRegs, char *flag) 
     do {
         printf("\n=== Passagem %d ===\n", passagem++);
 
-        // Abre as fitas de entrada para leitura e inicializa estado
         for (int i = 0; i < FITAS; i++) {
             char nome[50];
             sprintf(nome, "fitas/fita%02d.bin", inicioEntrada + i);
             estados[inicioEntrada + i].arquivo = fopen(nome, "rb");
             estados[inicioEntrada + i].blocosRestantes = numBlocos[inicioEntrada + i];
             estados[inicioEntrada + i].elementosRestantes = nElem[inicioEntrada + i];
-            estados[inicioEntrada + i].ativo = (numBlocos[inicioEntrada + i] > 0);
+            estados[inicioEntrada + i].ativo = (estados[inicioEntrada + i].arquivo != NULL && numBlocos[inicioEntrada + i] > 0);
         }
 
-        // Abre fitas de saída para escrita, zera contadores
         for (int i = 0; i < FITAS; i++) {
             char nome[50];
             sprintf(nome, "fitas/fita%02d.bin", inicioSaida + i);
@@ -481,13 +478,11 @@ void intercalacaoBalanceadaSS(const char *inputFile, int totalRegs, char *flag) 
         }
 
         int blocoAtual = 0;
-
         while (1) {
             Registro memoria[FITAS];
             short fitasAtivas[FITAS] = {0};
             int fitasComDados = 0;
 
-            // Carrega 1 registro inicial de cada fita ativa (do bloco atual)
             for (int i = 0; i < FITAS; i++) {
                 int idx = inicioEntrada + i;
                 if (estados[idx].ativo && estados[idx].blocosRestantes > 0) {
@@ -495,52 +490,56 @@ void intercalacaoBalanceadaSS(const char *inputFile, int totalRegs, char *flag) 
                         fitasAtivas[i] = 1;
                         fitasComDados++;
                     } else {
-                        // Fita esgotada, desativa
                         estados[idx].ativo = 0;
                         fitasAtivas[i] = 0;
                     }
                 }
             }
 
-            if (fitasComDados == 0) break;  // Sem dados, fim da intercalação
+            if (fitasComDados == 0) break;
 
             int fitaSaidaBloco = inicioSaida + (blocoAtual % FITAS);
             blocoAtual++;
-
+            
             int elementosBloco = 0;
+            Registro ultimoEscrito;
 
-            // Enquanto ainda houver fitas com dados no bloco
             while (fitasComDados > 0) {
                 int idxMenor = menorRegistroAtivo(memoria, fitasAtivas, FITAS);
                 if (idxMenor == -1) break;
 
-                // Escreve menor registro no arquivo de saída atual
-                fwrite(&memoria[idxMenor], sizeof(Registro), 1, estados[fitaSaidaBloco].arquivo);
+                Registro tempParaEscrever = memoria[idxMenor];
+                ultimoEscrito = tempParaEscrever;
+                tempParaEscrever.fimDeBloco = 0; // Limpa a flag antes de escrever
+
+                fwrite(&tempParaEscrever, sizeof(Registro), 1, estados[fitaSaidaBloco].arquivo);
                 elementosBloco++;
 
                 int idxEntrada = inicioEntrada + idxMenor;
-
-                // Se registro atual é fim de bloco, finaliza leitura do bloco desta fita
-                if (memoria[idxMenor].fimDeBloco == 1) {
+                if (memoria[idxMenor].fimDeBloco == 1) { // Usa a flag original para controle
                     fitasAtivas[idxMenor] = 0;
                     fitasComDados--;
                     estados[idxEntrada].blocosRestantes--;
                 } else {
-                    // Tenta ler próximo registro do mesmo bloco/fita
                     if (fread(&memoria[idxMenor], sizeof(Registro), 1, estados[idxEntrada].arquivo) != 1) {
-                        // Fim da fita, desativa
                         fitasAtivas[idxMenor] = 0;
                         fitasComDados--;
-                        estados[idxEntrada].blocosRestantes--;
+                        estados[idxEntrada].blocosRestantes--; 
                     }
                 }
             }
 
+            if (elementosBloco > 0) {
+                // Marca o novo fim de bloco na fita de saída
+                fseek(estados[fitaSaidaBloco].arquivo, -sizeof(Registro), SEEK_CUR);
+                ultimoEscrito.fimDeBloco = 1;
+                fwrite(&ultimoEscrito, sizeof(Registro), 1, estados[fitaSaidaBloco].arquivo);
+            }
+            
             numBlocos[fitaSaidaBloco]++;
             nElem[fitaSaidaBloco] += elementosBloco;
         }
 
-        // Fecha todos os arquivos abertos nessa passagem
         for (int i = 0; i < TOTAL_FITAS; i++) {
             if (estados[i].arquivo) {
                 fclose(estados[i].arquivo);
@@ -548,17 +547,14 @@ void intercalacaoBalanceadaSS(const char *inputFile, int totalRegs, char *flag) 
             }
         }
 
-        // Zera contadores das fitas que foram usadas como entrada
         for (int i = 0; i < FITAS; i++) {
             numBlocos[inicioEntrada + i] = 0;
             nElem[inicioEntrada + i] = 0;
         }
-
-        // Alterna os conjuntos de fitas para próxima passagem
+        
         inicioEntrada = inicioSaida;
         inicioSaida = (inicioSaida + FITAS) % TOTAL_FITAS;
 
-        // Conta quantas fitas ainda têm dados
         numFitasComDados = 0;
         for (int i = 0; i < FITAS; i++) {
             if (numBlocos[inicioEntrada + i] > 0) {
@@ -566,11 +562,9 @@ void intercalacaoBalanceadaSS(const char *inputFile, int totalRegs, char *flag) 
                 ultimaFitaComDados = inicioEntrada + i;
             }
         }
-
         printf("Fitas com dados: %d\n", numFitasComDados);
     } while (numFitasComDados > 1);
 
-    // Quando sobrar uma fita, converte binário para txt
     if (numFitasComDados == 1) {
         char nomeFinal[TAM_NOME];
         sprintf(nomeFinal, "fitas/fita%02d.bin", ultimaFitaComDados);
