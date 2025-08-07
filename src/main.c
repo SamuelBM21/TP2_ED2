@@ -6,7 +6,9 @@
 
 int main(int argc, char* argv[]) {
 
-    char in[20],out[20];
+    char filename[20], inName[20],outname[20];
+    Registro reg;
+
     if (argc != 4 && argc != 5){                                        //Se o número de parâmetros não estiver correto             
         printf("Não foi passado o número mínimo de parâmetros. \n");
         return 0;
@@ -21,7 +23,8 @@ int main(int argc, char* argv[]) {
     }
     
     int situacao = atoi(argv[3]);                                       //Converte argv na posição 3 para ter a situação do arquivo
-    char *flag = NULL;
+    char flag[10] = "";
+
     if (argc == 5){                                                     //Se tem 5 argumentos
         strcpy(flag,argv[4]);
         if(strcmp(flag,"[-P]") != 0){                                   //Se a flag colocada não for a esperada
@@ -33,41 +36,57 @@ int main(int argc, char* argv[]) {
 
     switch(situacao){
         case 1:                                                         //Ordenado Ascendentemente
-            //Dá nome aos arquivos de saída e entrada
-            strcpy(in,"ordenadoasc.txt");                   
-            strcpy(out,"saida.bin");
+            //Dá nome aos arquivos de saída e entrada da conversão
+            strcpy(filename,"ORDENADOASC.txt");  
+            strcpy(inName,"ORDENADOASC.bin");                 
             break;
         case 2:                                                         //Ordenado Descendentemente
-            //Dá nome aos arquivos de saída e entrada
-            strcpy(in,"ordenadodesc.txt");
-            strcpy(out,"saida.bin");
+            //Dá nome aos arquivos de saída e entrada da conversão
+            strcpy(filename,"ORDENADODESC.txt");
+            strcpy(inName,"ORDENADODESC.bin");
             break;
         case 3:                                                         //Aleatório
-            //Dá nome aos arquivos de saída e entrada
-            strcpy(in,"PROVAO.TXT");
-            strcpy(out,"saida.bin");
+            //Dá nome aos arquivos de saída e entrada da conversão
+            strcpy(filename,"PROVAO.TXT");
+            strcpy(inName,"PROVAO.bin");
             break;
+    }
+
+    txtbin(filename,inName, 471705);
+
+    if(strcmp(flag, "") != 0){
+        FILE *org = fopen(inName, "rb");
+        printf("\nRegistros Originais: \n");
+        for(int i = 0; i<quantidade; i++){                                           //Imprime como os registros estavam originalmente
+            fread(&reg,sizeof(Registro),1,org);
+            printf(
+                "%08ld %05.1f %2s %-50s %-30s\n",  // Formato fixo
+                reg.chave, 
+                reg.nota, 
+                reg.estado, 
+                reg.cidade, 
+                reg.curso
+            );
+        }
+        fclose(org);
     }
 
     switch(metodo){
     case 1:                                                         //Intercalação Balanceada - QuickSort
-            txtbin(in,out,quantidade);
-            printf("Chamando intercalação balanceada com quantidade = %d\n", quantidade);
-            intercalacaoBalanceadaQS("saida.bin",quantidade,flag);
+            printf("\n================= Intercalação balanceada com quantidade : %d =================\n", quantidade);
+            intercalacaoBalanceadaQS(inName,outname,quantidade);
             break;
-        case 2:  
-            txtbin(in,out,quantidade);                                                   //Intercalação Balanceada - Seleção por substituição
-            printf("Chamando intercalação balanceada com quantidade = %d\n", quantidade);
-            intercalacaoBalanceadaSS("saida.bin",quantidade);
-            gerarResumoFitas(40);
+        case 2:                                                     //Intercalação Balanceada - Seleção por substituição
+            printf("\n================= Intercalação balanceada com quantidade : %d =================\n", quantidade);
+            intercalacaoBalanceadaSS(inName,outname,quantidade);
             break;
         case 3:                                                     //QuickSort Externo
-            txtbin(in,out,quantidade);
-
+            printf("\n================= QuickSort Externo com quantidade : %d =================\n", quantidade);
             //Abre os arquivos (o mesmo) para leitura e escrita superior e inferior
-            FILE *li = fopen("saida.bin", "rb"); 
-            FILE *ei = fopen("saida.bin", "r+b");
-            FILE *les = fopen("saida.bin", "r+b");
+            FILE *li = fopen(inName, "rb"); 
+            FILE *ei = fopen(inName, "r+b");
+            FILE *les = fopen(inName, "r+b");
+            strcpy(outname,inName);
         
         
             if (!li || !ei || !les) {                               //Se não conseguiu abrir
@@ -78,12 +97,28 @@ int main(int argc, char* argv[]) {
                 return 1;
             }
 
-            printf("Chamando quicksort com quantidade = %d\n", quantidade);
             QuicksortExterno(&li, &ei, &les, 1, quantidade);        //Chama o quickSort
             fclose(li);
             fclose(ei);
             fclose(les);
             break;
+    }
+
+    if(strcmp(flag, "") != 0){                                                                       //Se tiver sido passada a flag                                                               
+        FILE *ord = fopen(outname, "rb");
+        printf("\nRegistros Ordenados: \n");
+        for(int i = 0; i<quantidade; i++){                                           //Imprime o resultado ordenado
+            fread(&reg,sizeof(Registro),1,ord);
+            printf(
+                "%08ld %05.1f %2s %-50s %-30s\n",  // Formato fixo
+                reg.chave, 
+                reg.nota, 
+                reg.estado, 
+                reg.cidade, 
+                reg.curso
+            );
+        }
+        fclose(ord);
     }
     return 0;
 }

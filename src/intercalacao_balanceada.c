@@ -98,7 +98,7 @@ void gerarBlocosOrdenadosQS(const char *inputFile, int totalRegs, int numBlocos[
     while (lidos < totalRegs) {
         int cnt = 0;                                                                            //Contador
 
-        while (cnt < TAM_MEM && fread(&memoria[cnt], sizeof(Registro), 1, entrada) == 1) {      //Enquanto o número de registros lidos é menor que o tamanho da memória
+        while (cnt < TAM_MEM && fread(&memoria[cnt], sizeof(Registro), 1, entrada) == 1 && lidos<totalRegs) {      //Enquanto o número de registros lidos é menor que o tamanho da memória
             cnt++;
             lidos++;
         }
@@ -131,7 +131,7 @@ Entrada: Nome do arquivo de entrada, número total de registros e flag para sabe
 Saída: Gera o arquivo de saída ordenado 'resultado.txt'.  
 */
 
-void intercalacaoBalanceadaQS(const char *inputFile, int totalRegs, char *flag) {
+void intercalacaoBalanceadaQS(const char *inputFile, char *outFile, int totalRegs) {
     system("rm -rf fitas");                                                             // Remove diretório antigo
     system("mkdir -p fitas");                                                           // Cria novo diretório de fitas
     
@@ -272,43 +272,13 @@ void intercalacaoBalanceadaQS(const char *inputFile, int totalRegs, char *flag) 
         printf("Fitas com dados: %d\n", numFitasComDados);                              //Imprime quantas fitas têm dados
     } while (numFitasComDados > 1);
 
-    Registro reg;
     // Quando o processo termina e só sobra uma única fita, converte para .txt
     if (numFitasComDados == 1) {
         char nomeFinal[TAM_NOME];                                                       
         sprintf(nomeFinal, "fitas/fita%02d.bin", ultimaFitaComDados);                   //Dá valor à variável com nome da fita que tem os dados ordenados
-        printf("Arquivo ordenado: %s\n", nomeFinal);
-        if(flag){                                                                       //Se tiver sido passada a flag
-            FILE *ord = fopen(nomeFinal, "rb");
-            FILE *org = fopen(inputFile, "rb");
-            printf("Registros Originais: \n");
-            for(int i = 0; i<totalRegs; i++){                                           //Imprime como os registros estavam originalmente
-                fread(&reg,sizeof(Registro),1,org);
-                printf(
-                    "%08ld %05.1f %2s %-50s %-30s\n",  // Formato fixo
-                    reg.chave, 
-                    reg.nota, 
-                    reg.estado, 
-                    reg.cidade, 
-                    reg.curso
-                );
-            }
-            printf("Registros Ordenados: \n");
-            for(int i = 0; i<totalRegs; i++){                                           //Imprime o resultado ordenado
-                fread(&reg,sizeof(Registro),1,ord);
-                printf(
-                    "%08ld %05.1f %2s %-50s %-30s\n",  // Formato fixo
-                    reg.chave, 
-                    reg.nota, 
-                    reg.estado, 
-                    reg.cidade, 
-                    reg.curso
-                );
-            }
-            fclose(ord);
-            fclose(org);
-        }
+        strcpy(outFile,nomeFinal);
         bintxt(nomeFinal, "resultado.txt");                                             //Realiza a conversão
+        printf("Arquivo com os registros ordenados: 'resultado.txt' \n");
     }
 }
 
@@ -382,7 +352,7 @@ void gerarBlocosOrdenadosSS(const char *inputFile, int totalRegs, int numBlocos[
     int tamanhoHeap = 0;
 
     //Enquanto a memoria(heap) não foi preenchida e foi possível ler um registro 
-    while (tamanhoHeap < TAM_MEM && fread(&heap[tamanhoHeap].reg, sizeof(Registro), 1, entrada) == 1) {
+    while (tamanhoHeap < TAM_MEM && fread(&heap[tamanhoHeap].reg, sizeof(Registro), 1, entrada) == 1 && lidos < totalRegs) {
         heap[tamanhoHeap].congelado = 0;
         lidos++;
         tamanhoHeap++;
@@ -494,7 +464,7 @@ Entrada: Nome do arquivo de entrada, número total de registros e flag para sabe
 Saída: Gera o arquivo de saída ordenado.  
 */ 
 
-void intercalacaoBalanceadaSS(const char *inputFile, int totalRegs, char *flag) {
+void intercalacaoBalanceadaSS(const char *inputFile, char *outFile, int totalRegs) {
     system("rm -rf fitas");
     system("mkdir -p fitas");
 
@@ -624,7 +594,9 @@ void intercalacaoBalanceadaSS(const char *inputFile, int totalRegs, char *flag) 
         char nomeFinal[TAM_NOME];
         sprintf(nomeFinal, "fitas/fita%02d.bin", ultimaFitaComDados);
         printf("Arquivo ordenado: %s\n", nomeFinal);
+        strcpy(outFile,nomeFinal);
         bintxt(nomeFinal, "resultado.txt");
+        printf("Arquivo com os registros ordenados: 'resultado.txt' \n");
     }
 }
 

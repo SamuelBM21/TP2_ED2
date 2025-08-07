@@ -13,7 +13,7 @@ typedef struct{
     char estado[3];
     char cidade[51];
     char curso[31];
-    char fimDeBloco;
+    int fimDeBloco;
 }Registro;
 
 typedef struct {

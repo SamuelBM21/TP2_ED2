@@ -70,7 +70,6 @@ int txtbin(char *in, char *out, int qtd) {
     //Fecha os arquivos
     fclose(txtFile);
     fclose(binFile);
-    printf("Conversão concluída com sucesso!\n");
     return 0;
 }
 
@@ -112,7 +111,5 @@ int bintxt(char *in, char *out) {
     //Fecha os arquivos
     fclose(binFile);
     fclose(txtFile);
-
-    printf("Arquivo texto restaurado com sucesso: '%s'\n", out);
     return 0;
 }
