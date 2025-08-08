@@ -82,16 +82,18 @@ int main(int argc, char* argv[]) {
     }
 
     inicio_metodo = clock();
-    long compCount = 0;  //Contador de comparações para os metodos
+    long compCount = 0;    //Contador de comparações para os metodos
+    long readCount = 0;    //Contador de Leituras
+    long writeCount = 0;   //Contador de Escritas
 
     switch(metodo){
     case 1:                                                         //Intercalação Balanceada - QuickSort
             printf("\n================= Intercalação balanceada com quantidade : %d =================\n", quantidade);
-            intercalacaoBalanceadaQS(inName,outname,quantidade,&compCount);
+            intercalacaoBalanceadaQS(inName,outname,quantidade,&compCount,&readCount,&writeCount);
             break;
         case 2:                                                     //Intercalação Balanceada - Seleção por substituição
             printf("\n================= Intercalação balanceada com quantidade : %d =================\n", quantidade);
-            intercalacaoBalanceadaSS(inName,outname,quantidade,&compCount);
+            intercalacaoBalanceadaSS(inName,outname,quantidade,&compCount,&readCount,&writeCount);
             break;
         case 3:                                                     //QuickSort Externo
             printf("\n================= QuickSort Externo com quantidade : %d =================\n", quantidade);
@@ -110,7 +112,7 @@ int main(int argc, char* argv[]) {
                 return 1;
             }
 
-            QuicksortExterno(&li, &ei, &les, 1, quantidade, &compCount);        //Chama o quickSort
+            QuicksortExterno(&li, &ei, &les, 1, quantidade, &compCount, &readCount, &writeCount);        //Chama o quickSort
             fclose(li);
             fclose(ei);
             fclose(les);
@@ -147,6 +149,8 @@ int main(int argc, char* argv[]) {
     fim = clock();
 
     printf("\nNúmero de Comparações do Método: %ld",compCount);
+    printf("\nNúmero de Leituras do Método: %ld",readCount);
+    printf("\nNúmero de Escritas do Método: %ld",writeCount);
     printf("\nTempo de Execução do Método: %lf\n",((double)(fim_metodo - inicio_metodo)) / CLOCKS_PER_SEC);
     printf("Tempo de Execução Total: %lf\n\n",((double)(fim - inicio)) / CLOCKS_PER_SEC);
     

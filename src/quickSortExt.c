@@ -1,17 +1,17 @@
 #include "quickSortExt.h"
 
-void QuicksortExterno(FILE **ArqLi , FILE **ArqEi , FILE **ArqLEs, int Esq, int Dir, long *compCount) {
+void QuicksortExterno(FILE **ArqLi , FILE **ArqEi , FILE **ArqLEs, int Esq, int Dir, long *compCount, long *readCount, long *writeCount) {
     int i, j;
     TipoArea Area;
     if (Esq >= Dir) return; // condição de parada mais clara
     FAVazia(&Area);
-    Particao(ArqLi , ArqEi , ArqLEs, Area, Esq, Dir, &i , &j, compCount);
+    Particao(ArqLi , ArqEi , ArqLEs, Area, Esq, Dir, &i , &j, compCount, readCount, writeCount);
     if (i - Esq < Dir - j) {
-        QuicksortExterno(ArqLi , ArqEi , ArqLEs, Esq, i, compCount);
-        QuicksortExterno(ArqLi , ArqEi , ArqLEs, j, Dir, compCount);
+        QuicksortExterno(ArqLi , ArqEi , ArqLEs, Esq, i, compCount, readCount, writeCount);
+        QuicksortExterno(ArqLi , ArqEi , ArqLEs, j, Dir, compCount, readCount, writeCount);
     } else {
-        QuicksortExterno(ArqLi , ArqEi , ArqLEs, j, Dir, compCount);
-        QuicksortExterno(ArqLi , ArqEi , ArqLEs, Esq, i, compCount);
+        QuicksortExterno(ArqLi , ArqEi , ArqLEs, j, Dir, compCount, readCount, writeCount);
+        QuicksortExterno(ArqLi , ArqEi , ArqLEs, Esq, i, compCount, readCount, writeCount);
     }
 }
 
@@ -58,7 +58,7 @@ void RetiraMin(TipoArea *Area, Registro *R, int *NRArea) {
     *NRArea = ObterNumCelOcupadas(Area);
 }
 
-void Particao(FILE **ArqLi , FILE **ArqEi , FILE **ArqLEs, TipoArea Area, int Esq, int Dir , int *i , int *j, long *compCount) {
+void Particao(FILE **ArqLi , FILE **ArqEi , FILE **ArqLEs, TipoArea Area, int Esq, int Dir , int *i , int *j, long *compCount, long *readCount, long *writeCount) {
     int Ls = Dir, Es = Dir, Li = Esq, Ei = Esq, NRArea = 0;
     double Linf = DBL_MIN, Lsup = DBL_MAX;
     bool OndeLer = true;
@@ -77,6 +77,7 @@ void Particao(FILE **ArqLi , FILE **ArqEi , FILE **ArqLEs, TipoArea Area, int Es
             else
                 LeInf(ArqLi, &UltLido, &Li, &OndeLer);
             InserirArea(&Area, &UltLido, &NRArea);
+            (*readCount)++;
             continue;
         }
 
@@ -88,17 +89,20 @@ void Particao(FILE **ArqLi , FILE **ArqEi , FILE **ArqLEs, TipoArea Area, int Es
             LeSup(ArqLEs, &UltLido, &Ls, &OndeLer);
         else
             LeInf(ArqLi, &UltLido, &Li, &OndeLer);
+        (*readCount)++;
 
         (*compCount)++;
         if (UltLido.nota > Lsup) {
             *j = Es;
             EscreveMax(ArqLEs, UltLido, &Es);
+            (*writeCount)++;
             continue;
         }
         (*compCount)++;
         if (UltLido.nota < Linf) {
             *i = Ei;
             EscreveMin(ArqEi, UltLido, &Ei);
+            (*writeCount)++;
             continue;
         }
 
@@ -106,10 +110,12 @@ void Particao(FILE **ArqLi , FILE **ArqEi , FILE **ArqLEs, TipoArea Area, int Es
         if (Ei - Esq < Dir - Es) {
             RetiraMin(&Area, &R, &NRArea);
             EscreveMin(ArqEi, R, &Ei);
+            (*writeCount)++;
             Linf = R.nota;
         } else {
             RetiraMax(&Area, &R, &NRArea);
             EscreveMax(ArqLEs, R, &Es);
+            (*writeCount)++;
             Lsup = R.nota;
         }
     }
@@ -117,5 +123,6 @@ void Particao(FILE **ArqLi , FILE **ArqEi , FILE **ArqLEs, TipoArea Area, int Es
     while (Ei <= Es) {
         RetiraMin(&Area, &R, &NRArea);
         EscreveMin(ArqEi, R, &Ei);
+        (*writeCount)++;
     }
 }

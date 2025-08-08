@@ -80,7 +80,7 @@ Entrada: Nome do arquivo de entrada, número total de registros, vetores de bloc
 Saída: -- (gera os arquivos binários das fitas com os blocos ordenados).  
 */
 
-void gerarBlocosOrdenadosQS(const char *inputFile, int totalRegs, int numBlocos[], int nElem[], long *compCount) {
+void gerarBlocosOrdenadosQS(const char *inputFile, int totalRegs, int numBlocos[], int nElem[], long *compCount, long *readCount, long *writeCount) {
     FILE *entrada = fopen(inputFile, "rb");                                             //Abre o arquivo
     if (!entrada) {                                                                     //Se não conseguiu abrir
         fprintf(stderr, "Erro ao abrir '%s': %s\n", inputFile, strerror(errno));
@@ -102,6 +102,7 @@ void gerarBlocosOrdenadosQS(const char *inputFile, int totalRegs, int numBlocos[
         while (cnt < TAM_MEM && fread(&memoria[cnt], sizeof(Registro), 1, entrada) == 1 && lidos<totalRegs) {      //Enquanto o número de registros lidos é menor que o tamanho da memória
             cnt++;
             lidos++;
+            (*readCount)++;
         }
 
         quickSort(memoria, 0, cnt - 1, compCount);                                                         //Ordena o bloco lido utilizando o quicksort
@@ -116,7 +117,8 @@ void gerarBlocosOrdenadosQS(const char *inputFile, int totalRegs, int numBlocos[
         }
 
         fwrite(memoria, sizeof(Registro), cnt, f);                                              //Escreve bloco ordenado na fita
-        fclose(f);                                                                              //Fecha a fita
+        fclose(f);
+        (*writeCount)++;                                                                              //Fecha a fita
         
         numBlocos[fita]++;                                                                      
         nElem[fita] += cnt;
@@ -132,7 +134,7 @@ Entrada: Nome do arquivo de entrada, número total de registros e flag para sabe
 Saída: Gera o arquivo de saída ordenado 'resultado.txt'.  
 */
 
-void intercalacaoBalanceadaQS(const char *inputFile, char *outFile, int totalRegs, long *compCount) {
+void intercalacaoBalanceadaQS(const char *inputFile, char *outFile, int totalRegs, long *compCount, long *readCount, long *writeCount) {
     system("rm -rf fitas");                                                             // Remove diretório antigo
     system("mkdir -p fitas");                                                           // Cria novo diretório de fitas
     
@@ -144,7 +146,7 @@ void intercalacaoBalanceadaQS(const char *inputFile, char *outFile, int totalReg
     int passagem = 0;
     int numFitasComDados;
 
-    gerarBlocosOrdenadosQS(inputFile, totalRegs, numBlocos, nElem, compCount);                       //Gera os blocos ordenados nas fitas
+    gerarBlocosOrdenadosQS(inputFile, totalRegs, numBlocos, nElem, compCount, readCount, writeCount);                       //Gera os blocos ordenados nas fitas
 
     FitaEstado estados[TOTAL_FITAS];
     memset(estados, 0, sizeof(estados));                                                //Zera estrutura de controle das fitas
@@ -201,6 +203,7 @@ void intercalacaoBalanceadaQS(const char *inputFile, char *outFile, int totalReg
                         fitasAtivas[i] = 1;                                             //"Ativa" a fita no vetor 
                         fitasComDados++;                                                //Aumenta o número de fitas com dados
                         registrosRestantesBloco[i]--;                                   //Por ter lido, diminui o número de registros restantes 
+                        (*readCount)++;
                     } else {
                         estados[idx].ativo = 0;                                         //Desativa a fita no vetor de estados
                         fitasAtivas[i] = 0;                                             //"Desativa" a fita no vetor 
@@ -220,7 +223,8 @@ void intercalacaoBalanceadaQS(const char *inputFile, char *outFile, int totalReg
             while (fitasComDados > 0) {
                 int idxMenor = menorRegistroAtivo(memoria, fitasAtivas, FITAS, compCount);         //Encontra o índice do registro com a menor nota
                 if (idxMenor == -1) break;                                              //Se não encontrou, sai do loop
-
+                
+                (*writeCount)++;
                 fwrite(&memoria[idxMenor], sizeof(Registro), 1, estados[fitaSaidaBloco].arquivo);       //Escreve o menor na fita de saída escolhida
                 elementosBloco++;                                                                       //Aumenta o número de elementos do bloco de saída
                 elementosProduzidos++;                                                                  //Aumenta o número de elementos produzidos
@@ -236,6 +240,7 @@ void intercalacaoBalanceadaQS(const char *inputFile, char *outFile, int totalReg
                     memset(&memoria[idxMenor], 0, sizeof(Registro));                    //Zera a posição do index do menor na memória 
                 } else {
                     registrosRestantesBloco[idxMenor]--;                                //Diminui o número de registros restantes no bloco
+                    (*readCount)++;                                                     //A leitura só é bem sucedida se cair no else
                 }
             }
 
@@ -333,7 +338,7 @@ Entrada: Nome do arquivo de entrada, número total de registros, vetores para ar
 Saída: Blocos ordenados são distribuídos entre as fitas, marcando fim de bloco quando necessário.  
 */
 
-void gerarBlocosOrdenadosSS(const char *inputFile, int totalRegs, int numBlocos[], int nElem[], long *compCount) {
+void gerarBlocosOrdenadosSS(const char *inputFile, int totalRegs, int numBlocos[], int nElem[], long *compCount, long *readCount, long *writeCount) {
     //Remove a pasta antiga de fitas e a cria novamente
     system("rm -rf fitas");
     system("mkdir -p fitas");
@@ -357,6 +362,7 @@ void gerarBlocosOrdenadosSS(const char *inputFile, int totalRegs, int numBlocos[
 
     //Enquanto a memoria(heap) não foi preenchida, foi possível ler um registro e o número de lidos não foi atingido
     while (tamanhoHeap < TAM_MEM && fread(&heap[tamanhoHeap].reg, sizeof(Registro), 1, entrada) == 1 && lidos < totalRegs) {
+        (*readCount)++;
         heap[tamanhoHeap].congelado = 0;
         lidos++;
         tamanhoHeap++;
@@ -390,12 +396,14 @@ void gerarBlocosOrdenadosSS(const char *inputFile, int totalRegs, int numBlocos[
         Registro temp = menor.reg;
         temp.fimDeBloco = 0;
         
-        fwrite(&temp, sizeof(Registro), 1, fitaAtual);                                          //Escreve o menor registro na fita atual
+        fwrite(&temp, sizeof(Registro), 1, fitaAtual);                                         //Escreve o menor registro na fita atual
+        (*writeCount)++;
         blocoTam++;                                                                             //Aumenta o tamanho do bloco
         ultimoSaido = temp;                                                                     //O último que saiu se torna esse menor
 
         Registro novo;
         //Se ainda não foram lidos todos os pedidos e ainda é possível ler 
+        (*readCount)++;
         if (lidos < totalRegs && fread(&novo, sizeof(Registro), 1, entrada) == 1) {
             lidos++;
             heap[0].reg = novo;                                                                 //Insere o novo na posição antiga do menor
@@ -427,6 +435,7 @@ void gerarBlocosOrdenadosSS(const char *inputFile, int totalRegs, int numBlocos[
                 fseek(fitaAtual, -sizeof(Registro), SEEK_CUR);                                  //Encontra o último registro e o marca como fim do bloco
                 ultimoSaido.fimDeBloco = 1;
                 fwrite(&ultimoSaido, sizeof(Registro), 1, fitaAtual);
+                (*writeCount)++;
                 fflush(fitaAtual);
             }
             
@@ -454,6 +463,7 @@ void gerarBlocosOrdenadosSS(const char *inputFile, int totalRegs, int numBlocos[
         fseek(fitaAtual, -sizeof(Registro), SEEK_CUR);                                          //Posiciona o ponteiro no final -1 registro
         ultimoSaido.fimDeBloco = 1;                                                             //Define tal registro como último do bloco
         fwrite(&ultimoSaido, sizeof(Registro), 1, fitaAtual);                                   //Escreve
+        (*writeCount)++;
         numBlocos[fita]++;                                                                      //Incrementa o número de blocos e elementos
         nElem[fita] += blocoTam;
         fclose(fitaAtual);                                                                      //Fecha a fita
@@ -469,7 +479,7 @@ Entrada: Nome do arquivo de entrada, número total de registros e flag para sabe
 Saída: Gera o arquivo de saída ordenado.  
 */ 
 
-void intercalacaoBalanceadaSS(const char *inputFile, char *outFile, int totalRegs, long *compCount) {
+void intercalacaoBalanceadaSS(const char *inputFile, char *outFile, int totalRegs, long *compCount, long *readCount, long *writeCount) {
     system("rm -rf fitas");
     system("mkdir -p fitas");
 
@@ -482,7 +492,7 @@ void intercalacaoBalanceadaSS(const char *inputFile, char *outFile, int totalReg
     int passagem = 0;
     int numFitasComDados;
 
-    gerarBlocosOrdenadosSS(inputFile, totalRegs, numBlocos, nElem, compCount);                                 //Gera os blocos ordenados por seleção por substituição
+    gerarBlocosOrdenadosSS(inputFile, totalRegs, numBlocos, nElem, compCount, readCount, writeCount);                                 //Gera os blocos ordenados por seleção por substituição
 
     FitaEstado estados[TOTAL_FITAS];                                                                //Cria a struct para guardar os estados das fitas
     memset(estados, 0, sizeof(estados));                                                            //Zera essa struct
@@ -519,6 +529,7 @@ void intercalacaoBalanceadaSS(const char *inputFile, char *outFile, int totalReg
             for (int i = 0; i < FITAS; i++) {
                 int idx = inicioEntrada + i;
                 if (estados[idx].ativo && estados[idx].blocosRestantes > 0) {
+                    (*readCount)++;
                     if (fread(&memoria[i], sizeof(Registro), 1, estados[idx].arquivo) == 1) {
                         fitasAtivas[i] = 1;
                         fitasComDados++;
@@ -549,6 +560,7 @@ void intercalacaoBalanceadaSS(const char *inputFile, char *outFile, int totalReg
                 tempParaEscrever.fimDeBloco = 0; // Limpa a flag antes de escrever
 
                 fwrite(&tempParaEscrever, sizeof(Registro), 1, estados[fitaSaidaBloco].arquivo);                        //Escreve essa menor no arquivo
+                (*writeCount)++;
                 elementosBloco++;
 
                 int idxEntrada = inicioEntrada + idxMenor;
@@ -557,7 +569,8 @@ void intercalacaoBalanceadaSS(const char *inputFile, char *outFile, int totalReg
                     fitasAtivas[idxMenor] = 0;
                     fitasComDados--;
                     estados[idxEntrada].blocosRestantes--;
-                } else {                                                                                                //Se não chegou ao fim, tenta ler mais um registros
+                } else {                                                                                           //Se não chegou ao fim, tenta ler mais um registros
+                    (*readCount)++;
                     if (fread(&memoria[idxMenor], sizeof(Registro), 1, estados[idxEntrada].arquivo) != 1) {
                         fitasAtivas[idxMenor] = 0;
                         fitasComDados--;
@@ -571,6 +584,7 @@ void intercalacaoBalanceadaSS(const char *inputFile, char *outFile, int totalReg
                 fseek(estados[fitaSaidaBloco].arquivo, -sizeof(Registro), SEEK_CUR);
                 ultimoEscrito.fimDeBloco = 1;
                 fwrite(&ultimoEscrito, sizeof(Registro), 1, estados[fitaSaidaBloco].arquivo);
+                (*writeCount)++;
             }
             
             numBlocos[fitaSaidaBloco]++;
