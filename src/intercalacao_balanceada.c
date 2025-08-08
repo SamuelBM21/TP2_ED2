@@ -33,10 +33,11 @@ Entrada: Vetor de registros, vetor de flags de atividade e número de fitas.
 Saída: Índice do menor registro entre os ativos, ou -1 se nenhum ativo.  
 */
 
-int menorRegistroAtivo(Registro registros[], short ativos[], int numFitas) {
+int menorRegistroAtivo(Registro registros[], short ativos[], int numFitas, long *compCount) {
     int menor = -1;
     for (int i = 0; i < numFitas; i++) {
         if (ativos[i]) {                                                                //Se a fita na posição está ativa
+            (*compCount)++;
             if (menor == -1 || registros[i].nota < registros[menor].nota) {             //Se for o primeiro ou menor que o atual menor
                 menor = i;                                                              //Atualiza o menor valor encontrado
             }
@@ -52,13 +53,13 @@ Entrada: Vetor de registros, índices inicial e final da parte a ser ordenada.
 Saída: --  
 */
 
-void quickSort(Registro *v, int esquerda, int direita) {
+void quickSort(Registro *v, int esquerda, int direita, long *compCount) {
     if (esquerda >= direita) return;                                //Se a esquerda for maior que a direita
     Registro pivo = v[(esquerda + direita) / 2];                    //Define qual é o pivô 
     int i = esquerda, j = direita;
     while (i <= j) { 
-        while (v[i].nota < pivo.nota) i++;
-        while (v[j].nota > pivo.nota) j--;
+        while (++(*compCount) && v[i].nota < pivo.nota) i++;
+        while (++(*compCount) && v[j].nota > pivo.nota) j--;
         if (i <= j) {
             Registro tmp = v[i];
             v[i] = v[j];
@@ -68,8 +69,8 @@ void quickSort(Registro *v, int esquerda, int direita) {
         }
     }
 
-    if (esquerda < j) quickSort(v, esquerda, j);                    //Chama o quickSort para a partição da esquerda
-    if (i < direita) quickSort(v, i, direita);                      //Chama o quickSort para a partição da direita
+    if (esquerda < j) quickSort(v, esquerda, j, compCount);                    //Chama o quickSort para a partição da esquerda
+    if (i < direita) quickSort(v, i, direita, compCount);                      //Chama o quickSort para a partição da direita
 }
 
 /*
@@ -79,7 +80,7 @@ Entrada: Nome do arquivo de entrada, número total de registros, vetores de bloc
 Saída: -- (gera os arquivos binários das fitas com os blocos ordenados).  
 */
 
-void gerarBlocosOrdenadosQS(const char *inputFile, int totalRegs, int numBlocos[], int nElem[]) {
+void gerarBlocosOrdenadosQS(const char *inputFile, int totalRegs, int numBlocos[], int nElem[], long *compCount) {
     FILE *entrada = fopen(inputFile, "rb");                                             //Abre o arquivo
     if (!entrada) {                                                                     //Se não conseguiu abrir
         fprintf(stderr, "Erro ao abrir '%s': %s\n", inputFile, strerror(errno));
@@ -103,7 +104,7 @@ void gerarBlocosOrdenadosQS(const char *inputFile, int totalRegs, int numBlocos[
             lidos++;
         }
 
-        quickSort(memoria, 0, cnt - 1);                                                         //Ordena o bloco lido utilizando o quicksort
+        quickSort(memoria, 0, cnt - 1, compCount);                                                         //Ordena o bloco lido utilizando o quicksort
 
         char nomeFita[TAM_NOME];
         sprintf(nomeFita, "fitas/fita%02d.bin", fita);                                          //Cria o nome da fita para escrever o bloco
@@ -131,7 +132,7 @@ Entrada: Nome do arquivo de entrada, número total de registros e flag para sabe
 Saída: Gera o arquivo de saída ordenado 'resultado.txt'.  
 */
 
-void intercalacaoBalanceadaQS(const char *inputFile, char *outFile, int totalRegs) {
+void intercalacaoBalanceadaQS(const char *inputFile, char *outFile, int totalRegs, long *compCount) {
     system("rm -rf fitas");                                                             // Remove diretório antigo
     system("mkdir -p fitas");                                                           // Cria novo diretório de fitas
     
@@ -143,7 +144,7 @@ void intercalacaoBalanceadaQS(const char *inputFile, char *outFile, int totalReg
     int passagem = 0;
     int numFitasComDados;
 
-    gerarBlocosOrdenadosQS(inputFile, totalRegs, numBlocos, nElem);                       //Gera os blocos ordenados nas fitas
+    gerarBlocosOrdenadosQS(inputFile, totalRegs, numBlocos, nElem, compCount);                       //Gera os blocos ordenados nas fitas
 
     FitaEstado estados[TOTAL_FITAS];
     memset(estados, 0, sizeof(estados));                                                //Zera estrutura de controle das fitas
@@ -217,7 +218,7 @@ void intercalacaoBalanceadaQS(const char *inputFile, char *outFile, int totalReg
 
             //Enquanto ainda houver registros nos blocos ativos
             while (fitasComDados > 0) {
-                int idxMenor = menorRegistroAtivo(memoria, fitasAtivas, FITAS);         //Encontra o índice do registro com a menor nota
+                int idxMenor = menorRegistroAtivo(memoria, fitasAtivas, FITAS, compCount);         //Encontra o índice do registro com a menor nota
                 if (idxMenor == -1) break;                                              //Se não encontrou, sai do loop
 
                 fwrite(&memoria[idxMenor], sizeof(Registro), 1, estados[fitaSaidaBloco].arquivo);       //Escreve o menor na fita de saída escolhida
@@ -289,25 +290,27 @@ Entrada: Vetor de elementos do heap, tamanho total do heap e índice a partir do
 Saída: Heap reorganizado com o menor elemento na raiz.  
 */
 
-void heapify(HeapElem heap[], int n, int i) {
+void heapify(HeapElem heap[], int n, int i, long *compCount) {
     int menor = i;
     int esq = 2 * i + 1;
     int dir = 2 * i + 2;
 
     // Se a esquerda é menor que o tamanho, o reg da esquerda não está congelado e o menor não está congelado ou é maior que o da esquerda
-    if (esq < n && (!heap[esq].congelado && (heap[menor].congelado || heap[esq].reg.nota < heap[menor].reg.nota))) 
+    if (esq < n && (!heap[esq].congelado && (heap[menor].congelado || heap[esq].reg.nota < heap[menor].reg.nota))) {
         menor = esq;
-
+        (*compCount)++;
+    }
     // Se a direita é menor que o tamanho, o reg da direita não está congelado e o menor não está congelado ou é maior que o da direita
-    if (dir < n && (!heap[dir].congelado && (heap[menor].congelado || heap[dir].reg.nota < heap[menor].reg.nota))) 
+    if (dir < n && (!heap[dir].congelado && (heap[menor].congelado || heap[dir].reg.nota < heap[menor].reg.nota))) {
         menor = dir;
-
+        (*compCount)++;
+    }
     //Se trocou o menor, realiza a troca e refaz o heap
     if (menor != i) {
         HeapElem temp = heap[i];
         heap[i] = heap[menor];
         heap[menor] = temp;
-        heapify(heap, n, menor);
+        heapify(heap, n, menor, compCount);
     }
 }
 
@@ -317,9 +320,9 @@ Função: Constrói um heap mínimo a partir de um vetor de elementos, aplicando
 Entrada: Vetor de elementos do heap e seu tamanho.  
 Saída: Vetor reorganizado em forma de heap mínimo.  
 */
-void construirHeapMin(HeapElem heap[], int n) {
+void construirHeapMin(HeapElem heap[], int n, long *compCount) {
     for (int i = n / 2 - 1; i >= 0; i--) {
-        heapify(heap, n, i);
+        heapify(heap, n, i, compCount);
     }
 }
 
@@ -330,7 +333,7 @@ Entrada: Nome do arquivo de entrada, número total de registros, vetores para ar
 Saída: Blocos ordenados são distribuídos entre as fitas, marcando fim de bloco quando necessário.  
 */
 
-void gerarBlocosOrdenadosSS(const char *inputFile, int totalRegs, int numBlocos[], int nElem[]) {
+void gerarBlocosOrdenadosSS(const char *inputFile, int totalRegs, int numBlocos[], int nElem[], long *compCount) {
     //Remove a pasta antiga de fitas e a cria novamente
     system("rm -rf fitas");
     system("mkdir -p fitas");
@@ -359,7 +362,7 @@ void gerarBlocosOrdenadosSS(const char *inputFile, int totalRegs, int numBlocos[
         tamanhoHeap++;
     }
 
-    construirHeapMin(heap, tamanhoHeap);                                //Constrói o heap mínimo
+    construirHeapMin(heap, tamanhoHeap, compCount);                                //Constrói o heap mínimo
 
     Registro ultimoSaido;
     int blocoTam = 0;
@@ -397,6 +400,7 @@ void gerarBlocosOrdenadosSS(const char *inputFile, int totalRegs, int numBlocos[
             lidos++;
             heap[0].reg = novo;                                                                 //Insere o novo na posição antiga do menor
             heap[0].congelado = (novo.nota < ultimoSaido.nota);                                 //Se a nota do novo for menor que a do último, congela ele
+            (*compCount)++;
         } else {                                                                                //Se não conseguiu ler, diminui o tamanho do heap e coloca o último valor no início 
             heap[0] = heap[tamanhoHeap - 1];
             tamanhoHeap--;
@@ -404,7 +408,7 @@ void gerarBlocosOrdenadosSS(const char *inputFile, int totalRegs, int numBlocos[
 
         //Se ainda tiverem registros no heap
         if (tamanhoHeap > 0) {
-            heapify(heap, tamanhoHeap, 0);                                                      //Refaz o heap
+            heapify(heap, tamanhoHeap, 0, compCount);                                                      //Refaz o heap
         }
 
         int todosCongelados = 1;
@@ -440,7 +444,7 @@ void gerarBlocosOrdenadosSS(const char *inputFile, int totalRegs, int numBlocos[
             }
 
             if (tamanhoHeap > 0) {
-                construirHeapMin(heap, tamanhoHeap);                                            //Constrói o heap novamente se o tamanho for maior que 0
+                construirHeapMin(heap, tamanhoHeap, compCount);                                            //Constrói o heap novamente se o tamanho for maior que 0
             }
         }
     }
@@ -465,7 +469,7 @@ Entrada: Nome do arquivo de entrada, número total de registros e flag para sabe
 Saída: Gera o arquivo de saída ordenado.  
 */ 
 
-void intercalacaoBalanceadaSS(const char *inputFile, char *outFile, int totalRegs) {
+void intercalacaoBalanceadaSS(const char *inputFile, char *outFile, int totalRegs, long *compCount) {
     system("rm -rf fitas");
     system("mkdir -p fitas");
 
@@ -478,7 +482,7 @@ void intercalacaoBalanceadaSS(const char *inputFile, char *outFile, int totalReg
     int passagem = 0;
     int numFitasComDados;
 
-    gerarBlocosOrdenadosSS(inputFile, totalRegs, numBlocos, nElem);                                 //Gera os blocos ordenados por seleção por substituição
+    gerarBlocosOrdenadosSS(inputFile, totalRegs, numBlocos, nElem, compCount);                                 //Gera os blocos ordenados por seleção por substituição
 
     FitaEstado estados[TOTAL_FITAS];                                                                //Cria a struct para guardar os estados das fitas
     memset(estados, 0, sizeof(estados));                                                            //Zera essa struct
@@ -537,7 +541,7 @@ void intercalacaoBalanceadaSS(const char *inputFile, char *outFile, int totalReg
 
             //Enquanto tiverem fitas com dados
             while (fitasComDados > 0) {
-                int idxMenor = menorRegistroAtivo(memoria, fitasAtivas, FITAS);                                         //Encontra o menor registro na memória
+                int idxMenor = menorRegistroAtivo(memoria, fitasAtivas, FITAS, compCount);                                         //Encontra o menor registro na memória
                 if (idxMenor == -1) break;
 
                 Registro tempParaEscrever = memoria[idxMenor];                                                          //Cria uma variável temporária para escrita            

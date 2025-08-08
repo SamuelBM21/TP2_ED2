@@ -21,15 +21,15 @@ typedef struct {
 
 //Funções
 int numFitasPreenchidas(int elementos[], int inicio, int *ultimaFita);
-int menorRegistroAtivo(Registro registros[], short ativos[], int numFitas);
-void quickSort(Registro *v, int esquerda, int direita);
-void gerarBlocosOrdenadosQS(const char *inputFile, int totalRegs, int numBlocos[], int nElem[]);
-void intercalacaoBalanceadaQS(const char *inputFile, char *outFile, int totalBlocos);
+int menorRegistroAtivo(Registro registros[], short ativos[], int numFitas, long *compCount);
+void quickSort(Registro *v, int esquerda, int direita, long *compCount);
+void gerarBlocosOrdenadosQS(const char *inputFile, int totalRegs, int numBlocos[], int nElem[], long *compCount);
+void intercalacaoBalanceadaQS(const char *inputFile, char *outFile, int totalBlocos, long *compCount);
 
-void intercalacaoBalanceadaSS(const char *inputFile, char *outFile, int totalRegs);
-void gerarBlocosOrdenadosSS(const char *inputFile, int totalRegs, int numBlocos[], int nElem[]);
-void construirHeapMin(HeapElem heap[], int n);
-void heapify(HeapElem heap[], int n, int i);
+void intercalacaoBalanceadaSS(const char *inputFile, char *outFile, int totalRegs, long *compCunt);
+void gerarBlocosOrdenadosSS(const char *inputFile, int totalRegs, int numBlocos[], int nElem[], long *compCount);
+void construirHeapMin(HeapElem heap[], int n, long *compCount);
+void heapify(HeapElem heap[], int n, int i, long *compCount);
 void gerarResumoFitas(int numFitas);
 
 #endif // INTERCALACAO_BALANCEADA_H

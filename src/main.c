@@ -1,3 +1,4 @@
+#include <time.h>
 #include <stdio.h>
 #include "../include/quickSortExt.h"
 #include "../include/intercalacao_balanceada.h"
@@ -5,6 +6,9 @@
 #include "../include/area.h"
 
 int main(int argc, char* argv[]) {
+
+    time_t inicio, fim, inicio_metodo, fim_metodo;
+    inicio = clock();
 
     char filename[20], inName[20],outname[20];
     Registro reg;
@@ -50,9 +54,15 @@ int main(int argc, char* argv[]) {
             strcpy(filename,"PROVAO.TXT");
             strcpy(inName,"PROVAO.bin");
             break;
+        default:
+            printf("\nERRO!! Situação inválida, use um número de 1 a 3.\n\n");
+            return 1;
+            break;
     }
 
-    txtbin(filename,inName, 471705);
+    if(txtbin(filename,inName, 471705))
+        return 1;
+    
 
     if(strcmp(flag, "") != 0){
         FILE *org = fopen(inName, "rb");
@@ -71,14 +81,17 @@ int main(int argc, char* argv[]) {
         fclose(org);
     }
 
+    inicio_metodo = clock();
+    long compCount = 0;  //Contador de comparações para os metodos
+
     switch(metodo){
     case 1:                                                         //Intercalação Balanceada - QuickSort
             printf("\n================= Intercalação balanceada com quantidade : %d =================\n", quantidade);
-            intercalacaoBalanceadaQS(inName,outname,quantidade);
+            intercalacaoBalanceadaQS(inName,outname,quantidade,&compCount);
             break;
         case 2:                                                     //Intercalação Balanceada - Seleção por substituição
             printf("\n================= Intercalação balanceada com quantidade : %d =================\n", quantidade);
-            intercalacaoBalanceadaSS(inName,outname,quantidade);
+            intercalacaoBalanceadaSS(inName,outname,quantidade,&compCount);
             break;
         case 3:                                                     //QuickSort Externo
             printf("\n================= QuickSort Externo com quantidade : %d =================\n", quantidade);
@@ -97,7 +110,7 @@ int main(int argc, char* argv[]) {
                 return 1;
             }
 
-            QuicksortExterno(&li, &ei, &les, 1, quantidade);        //Chama o quickSort
+            QuicksortExterno(&li, &ei, &les, 1, quantidade, &compCount);        //Chama o quickSort
             fclose(li);
             fclose(ei);
             fclose(les);
@@ -106,7 +119,13 @@ int main(int argc, char* argv[]) {
             printf("Arquivo com os registros ordenados: 'resultado_qse.txt' \n");
             bintxt(inName, "resultado_qse.txt",quantidade);
             break;
+        default:
+            printf("\nERRO!! Método inválido, use um número de 1 a 3.\n\n");
+            return 1;
+            break;
     }
+
+    fim_metodo = clock();
 
     if(strcmp(flag, "") != 0){                                                                      //Se tiver sido passada a flag                                                               
         FILE *ord = fopen(outname, "rb");
@@ -124,5 +143,12 @@ int main(int argc, char* argv[]) {
         }
         fclose(ord);
     }
+
+    fim = clock();
+
+    printf("\nNúmero de Comparações do Método: %ld",compCount);
+    printf("\nTempo de Execução do Método: %lf\n",((double)(fim_metodo - inicio_metodo)) / CLOCKS_PER_SEC);
+    printf("Tempo de Execução Total: %lf\n\n",((double)(fim - inicio)) / CLOCKS_PER_SEC);
+    
     return 0;
 }

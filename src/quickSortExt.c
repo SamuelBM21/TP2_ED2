@@ -1,17 +1,17 @@
 #include "quickSortExt.h"
 
-void QuicksortExterno(FILE **ArqLi , FILE **ArqEi , FILE **ArqLEs, int Esq, int Dir) {
+void QuicksortExterno(FILE **ArqLi , FILE **ArqEi , FILE **ArqLEs, int Esq, int Dir, long *compCount) {
     int i, j;
     TipoArea Area;
     if (Esq >= Dir) return; // condição de parada mais clara
     FAVazia(&Area);
-    Particao(ArqLi , ArqEi , ArqLEs, Area, Esq, Dir, &i , &j);
+    Particao(ArqLi , ArqEi , ArqLEs, Area, Esq, Dir, &i , &j, compCount);
     if (i - Esq < Dir - j) {
-        QuicksortExterno(ArqLi , ArqEi , ArqLEs, Esq, i);
-        QuicksortExterno(ArqLi , ArqEi , ArqLEs, j, Dir);
+        QuicksortExterno(ArqLi , ArqEi , ArqLEs, Esq, i, compCount);
+        QuicksortExterno(ArqLi , ArqEi , ArqLEs, j, Dir, compCount);
     } else {
-        QuicksortExterno(ArqLi , ArqEi , ArqLEs, j, Dir);
-        QuicksortExterno(ArqLi , ArqEi , ArqLEs, Esq, i);
+        QuicksortExterno(ArqLi , ArqEi , ArqLEs, j, Dir, compCount);
+        QuicksortExterno(ArqLi , ArqEi , ArqLEs, Esq, i, compCount);
     }
 }
 
@@ -58,7 +58,7 @@ void RetiraMin(TipoArea *Area, Registro *R, int *NRArea) {
     *NRArea = ObterNumCelOcupadas(Area);
 }
 
-void Particao(FILE **ArqLi , FILE **ArqEi , FILE **ArqLEs, TipoArea Area, int Esq, int Dir , int *i , int *j) {
+void Particao(FILE **ArqLi , FILE **ArqEi , FILE **ArqLEs, TipoArea Area, int Esq, int Dir , int *i , int *j, long *compCount) {
     int Ls = Dir, Es = Dir, Li = Esq, Ei = Esq, NRArea = 0;
     double Linf = DBL_MIN, Lsup = DBL_MAX;
     bool OndeLer = true;
@@ -70,6 +70,7 @@ void Particao(FILE **ArqLi , FILE **ArqEi , FILE **ArqLEs, TipoArea Area, int Es
     *j = Dir + 1;
 
     while (Ls >= Li) {
+        (*compCount)++;
         if (NRArea < TAMAREA - 1) {
             if (OndeLer)
                 LeSup(ArqLEs, &UltLido, &Ls, &OndeLer);
@@ -88,11 +89,13 @@ void Particao(FILE **ArqLi , FILE **ArqEi , FILE **ArqLEs, TipoArea Area, int Es
         else
             LeInf(ArqLi, &UltLido, &Li, &OndeLer);
 
+        (*compCount)++;
         if (UltLido.nota > Lsup) {
             *j = Es;
             EscreveMax(ArqLEs, UltLido, &Es);
             continue;
         }
+        (*compCount)++;
         if (UltLido.nota < Linf) {
             *i = Ei;
             EscreveMin(ArqEi, UltLido, &Ei);

@@ -23,7 +23,7 @@ int txtbin(char *in, char *out, int qtd) {
 
     binFile = fopen(out, "wb");                         //Abre o arquivo de saída
     if (!binFile) {                                     //Se não conseguiu abrir
-        perror("Erro ao criar arquivo binário");
+        perror("\nErro ao criar arquivo binário\n");
         fclose(txtFile);
         return 1;
     }
