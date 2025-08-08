@@ -101,13 +101,17 @@ int main(int argc, char* argv[]) {
             fclose(li);
             fclose(ei);
             fclose(les);
+
+            printf("Arquivo ordenado: %s\n",inName);
+            printf("Arquivo com os registros ordenados: 'resultado_qse.txt' \n");
+            bintxt(inName, "resultado_qse.txt",quantidade);
             break;
     }
 
-    if(strcmp(flag, "") != 0){                                                                       //Se tiver sido passada a flag                                                               
+    if(strcmp(flag, "") != 0){                                                                      //Se tiver sido passada a flag                                                               
         FILE *ord = fopen(outname, "rb");
         printf("\nRegistros Ordenados: \n");
-        for(int i = 0; i<quantidade; i++){                                           //Imprime o resultado ordenado
+        for(int i = 0; i<quantidade; i++){                                                          //Imprime o resultado ordenado
             fread(&reg,sizeof(Registro),1,ord);
             printf(
                 "%08ld %05.1f %2s %-50s %-30s\n",  // Formato fixo

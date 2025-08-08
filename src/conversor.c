@@ -79,10 +79,10 @@ Função: Converte um arquivo binário para um arquivo texto.
 Entrada: Nome do arquivo binário, nome do arquivo texto.  
 Saída: 0 se tudo ocorreu certo e 1 caso contrário.
 */
-int bintxt(char *in, char *out) {
+int bintxt(char *in, char *out, int qtd) {
     FILE *binFile, *txtFile;
     Registro reg;
-
+    int i =0;
     binFile = fopen(in, "rb");                                      //Abre o arquivo de entrada
     if (binFile == NULL) {                                          //Se não conseguiu abrir  
         perror("Erro ao abrir arquivo binário");
@@ -97,7 +97,7 @@ int bintxt(char *in, char *out) {
     }
 
     //Lê cada registro do binário e escreve no .txt
-    while (fread(&reg, sizeof(Registro), 1, binFile) == 1) {
+    while (fread(&reg, sizeof(Registro), 1, binFile) == 1 && i<qtd) {
         fprintf(txtFile, 
             "%08ld %05.1f %2s %-50s %-30s\n",  // Formato fixo
             reg.chave, 
@@ -106,6 +106,7 @@ int bintxt(char *in, char *out) {
             reg.cidade, 
             reg.curso
         );
+        i++;
     }
 
     //Fecha os arquivos
