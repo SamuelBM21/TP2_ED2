@@ -1,0 +1,46 @@
+Metodo,Quantidade,Situacao Arquivo,Comparacoes,Leituras (Chamadas),Escritas (Chamadas),Tempo Metodo (s),Tempo Total (s)
+Intercalacao (Quicksort),100,Ascendente,700,200,105,0.00845,0.156833
+Intercalacao (Quicksort),100,Descendente,749,200,105,0.001064,0.147393
+Intercalacao (Quicksort),100,Aleatorio,1045,200,105,0.001256,0.166996
+Intercalacao (Quicksort),1000,Ascendente,15700,3000,2050,0.003221,0.159232
+Intercalacao (Quicksort),1000,Descendente,15970,3000,2050,0.003326,0.154666
+Intercalacao (Quicksort),1000,Aleatorio,25169,3000,2050,0.003635,0.158965
+Intercalacao (Quicksort),10000,Ascendente,253000,40000,30500,0.023099,0.175434
+Intercalacao (Quicksort),10000,Descendente,257134,40000,30500,0.022616,0.168762
+Intercalacao (Quicksort),10000,Aleatorio,429664,40000,30500,0.021514,0.182163
+Intercalacao (Quicksort),100000,Ascendente,3204350,400000,305000,0.176338,0.324747
+Intercalacao (Quicksort),100000,Descendente,3264518,400000,305000,0.181894,0.328592
+Intercalacao (Quicksort),100000,Aleatorio,5667726,400000,305000,0.198719,0.35139
+Intercalacao (Quicksort),471705,Ascendente,17628733,2358525,1910406,1.035218,1.182467
+Intercalacao (Quicksort),471705,Descendente,18055630,2358525,1910406,0.958905,1.1176
+Intercalacao (Quicksort),471705,Aleatorio,31391205,2358525,1910406,1.026669,1.18078
+Intercalacao (Selecao por Substituicao),100,Ascendente,180,220,202,0.007789,0.159874
+Intercalacao (Selecao por Substituicao),100,Descendente,559,220,205,0.001238,0.159286
+Intercalacao (Selecao por Substituicao),100,Aleatorio,770,220,204,0.001306,0.155933
+Intercalacao (Selecao por Substituicao),1000,Ascendente,1980,2020,2002,0.002534,0.155243
+Intercalacao (Selecao por Substituicao),1000,Descendente,12964,3020,3028,0.0036,0.168133
+Intercalacao (Selecao por Substituicao),1000,Aleatorio,23446,3020,3028,0.004376,0.169467
+Intercalacao (Selecao por Substituicao),10000,Ascendente,19980,20020,20002,0.01212,0.183419
+Intercalacao (Selecao por Substituicao),10000,Descendente,160416,30020,30088,0.016013,0.164439
+Intercalacao (Selecao por Substituicao),10000,Aleatorio,357978,30020,30252,0.018996,0.173651
+Intercalacao (Selecao por Substituicao),100000,Ascendente,206263,200020,200002,0.100185,0.285485
+Intercalacao (Selecao por Substituicao),100000,Descendente,1961317,300020,300243,0.147419,0.299266
+Intercalacao (Selecao por Substituicao),100000,Aleatorio,5082371,400020,402566,0.212934,0.372638
+Intercalacao (Selecao por Substituicao),471705,Ascendente,982227,943430,943412,0.531463,0.680959
+Intercalacao (Selecao por Substituicao),471705,Descendente,11207141,1886840,1887451,0.778549,0.938548
+Intercalacao (Selecao por Substituicao),471705,Aleatorio,29495012,2358545,2370452,1.105801,1.265305
+Quicksort Externo,100,Ascendente,745,315,315,0.001334,0.159998
+Quicksort Externo,100,Descendente,262,100,100,0.000651,0.157971
+Quicksort Externo,100,Aleatorio,420,199,199,0.001919,0.191925
+Quicksort Externo,1000,Ascendente,78454,26818,26818,0.084086,0.258474
+Quicksort Externo,1000,Descendente,2962,1000,1000,0.00521,0.159645
+Quicksort Externo,1000,Aleatorio,10727,4642,4642,0.019266,0.19855
+Quicksort Externo,10000,Ascendente,7889743,2636581,2636581,8.106799,8.26384
+Quicksort Externo,10000,Descendente,29962,10000,10000,0.046231,0.204105
+Quicksort Externo,10000,Aleatorio,370851,136841,136841,0.478013,0.657351
+Quicksort Externo,100000,Ascendente,165858534,55316722,55316722,169.82323,169.987751
+Quicksort Externo,100000,Descendente,299962,100000,100000,0.513726,0.717169
+Quicksort Externo,100000,Aleatorio,11073702,3818259,3818259,12.322965,12.543083
+Quicksort Externo,471705,Ascendente,166973649,55688427,55688427,172.151392,172.327528
+Quicksort Externo,471705,Descendente,166966418,55686016,55686016,173.399876,173.581128
+Quicksort Externo,471705,Aleatorio,176695408,59553808,59553808,184.684983,184.878353
