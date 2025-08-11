@@ -4,8 +4,9 @@
 Nome: QuicksortExterno
 Função: Executa o algoritmo de QuickSort para ordenação externa de registros em arquivo.
 Entrada: Ponteiros para arquivos de leitura/escrita, índices Esq e Dir, e contadores de comparações/leitura/escrita.
-Saída: Arquivos ordenados parcialmente.
+Saída:--
 */
+
 void QuicksortExterno(FILE **ArqLi , FILE **ArqEi , FILE **ArqLEs, int Esq, int Dir, long *compCount, long *readCount, long *writeCount) {
     int i, j;
     TipoArea Area;
@@ -25,9 +26,9 @@ void QuicksortExterno(FILE **ArqLi , FILE **ArqEi , FILE **ArqLEs, int Esq, int 
 
 /*
 Nome: LeSup
-Função: Lê o próximo registro a partir do final do arquivo superior.
+Função: Lê o próximo registro a partir da posição no arquivo superior.
 Entrada: Ponteiro para arquivo, registro destino, posição e flag de controle.
-Saída: Registro lido e atualização dos parâmetros.
+Saída:--
 */
 void LeSup(FILE **ArqLEs, Registro *UltLido , int *Ls , bool *OndeLer) {
     fflush(*ArqLEs);
@@ -39,9 +40,9 @@ void LeSup(FILE **ArqLEs, Registro *UltLido , int *Ls , bool *OndeLer) {
 
 /*
 Nome: LeInf
-Função: Lê o próximo registro a partir do início do arquivo inferior.
+Função: Lê o próximo registro a partir da posição no arquivo inferior.
 Entrada: Ponteiro para arquivo, registro destino, posição e flag de controle.
-Saída: Registro lido e atualização dos parâmetros.
+Saída: --
 */
 void LeInf(FILE **ArqLi , Registro *UltLido , int *Li , bool *OndeLer) {
     fflush(*ArqLi);
@@ -54,7 +55,7 @@ void LeInf(FILE **ArqLi , Registro *UltLido , int *Li , bool *OndeLer) {
 Nome: InserirArea
 Função: Insere um registro na área de memória temporária.
 Entrada: Área, registro e número de registros na área.
-Saída: Área atualizada e quantidade de registros.
+Saída: --
 */
 void InserirArea(TipoArea *Area, Registro *UltLido , int *NRArea) {
     InsereItem(*UltLido, Area);
@@ -65,7 +66,7 @@ void InserirArea(TipoArea *Area, Registro *UltLido , int *NRArea) {
 Nome: EscreveMax
 Função: Escreve um registro na posição final do arquivo.
 Entrada: Ponteiro para arquivo, registro e posição.
-Saída: Arquivo atualizado.
+Saída: --
 */
 void EscreveMax(FILE **ArqLEs, Registro R, int *Es) {
     fseek(*ArqLEs, (*Es - 1) * sizeof(Registro), SEEK_SET);
@@ -78,7 +79,7 @@ void EscreveMax(FILE **ArqLEs, Registro R, int *Es) {
 Nome: EscreveMin
 Função: Escreve um registro na próxima posição inicial do arquivo.
 Entrada: Ponteiro para arquivo, registro e posição.
-Saída: Arquivo atualizado.
+Saída: --
 */
 void EscreveMin(FILE **ArqEi , Registro R, int *Ei) {
     fwrite(&R, sizeof(Registro), 1, *ArqEi);
@@ -90,7 +91,7 @@ void EscreveMin(FILE **ArqEi , Registro R, int *Ei) {
 Nome: RetiraMax
 Função: Remove o maior registro da área.
 Entrada: Área, registro destino e número de registros.
-Saída: Registro removido e área atualizada.
+Saída:--
 */
 void RetiraMax(TipoArea *Area, Registro *R, int *NRArea) {
     RetiraUltimo(Area, R);
@@ -101,7 +102,7 @@ void RetiraMax(TipoArea *Area, Registro *R, int *NRArea) {
 Nome: RetiraMin
 Função: Remove o menor registro da área.
 Entrada: Área, registro destino e número de registros.
-Saída: Registro removido e área atualizada.
+Saída: --
 */
 void RetiraMin(TipoArea *Area, Registro *R, int *NRArea) {
     RetiraPrimeiro(Area, R);
@@ -112,7 +113,7 @@ void RetiraMin(TipoArea *Area, Registro *R, int *NRArea) {
 Nome: Particao
 Função: Realiza a partição dos registros em três áreas: menor, maior e área temporária.
 Entrada: Ponteiros para arquivos, área, índices Esq e Dir, ponteiros de retorno i e j, e contadores.
-Saída: Arquivos particionados e índices de corte atualizados.
+Saída:--
 */
 void Particao(FILE **ArqLi , FILE **ArqEi , FILE **ArqLEs, TipoArea Area, int Esq, int Dir , int *i , int *j, long *compCount, long *readCount, long *writeCount) {
     int Ls = Dir, Es = Dir, Li = Esq, Ei = Esq, NRArea = 0;

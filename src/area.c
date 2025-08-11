@@ -45,7 +45,7 @@ void InsereItem(Registro reg, TipoArea *Area) {
 Nome: RetiraUltimo  
 Função: Remove o último elemento da área e o retorna.  
 Entrada: Ponteiro para estrutura TipoArea e ponteiro para Registro (onde será armazenado o valor removido).  
-Saída: Nenhuma (registro removido é retornado por referência).  
+Saída:-- 
 */
 void RetiraUltimo(TipoArea *Area, Registro *reg) {
     *reg = Area->itens[Area->n - 1];  // Copia o último registro para a variável de saída
@@ -56,7 +56,7 @@ void RetiraUltimo(TipoArea *Area, Registro *reg) {
 Nome: RetiraPrimeiro  
 Função: Remove o primeiro elemento da área e o retorna, deslocando todos os outros registros uma posição para a esquerda.  
 Entrada: Ponteiro para estrutura TipoArea e ponteiro para Registro (onde será armazenado o valor removido).  
-Saída: Nenhuma (registro removido é retornado por referência).  
+Saída:--
 */
 void RetiraPrimeiro(TipoArea *Area, Registro *reg) {
     *reg = Area->itens[0];  // Copia o primeiro registro
