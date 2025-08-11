@@ -40,7 +40,7 @@ int comparaLongs(const void *a, const void *b) {
 
 int main(int argc, char* argv[]) {
     FILE *arqOrig = fopen("PROVAO.TXT", "r");
-    FILE *arqRes = fopen("resultado.txt", "r");
+    FILE *arqRes = fopen("resultado_qse.txt", "r");
     int qtd = atoi(argv[1]);
     int i = 0;
 
